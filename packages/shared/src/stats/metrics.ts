@@ -1,8 +1,8 @@
 import { isCompleted, type CompletedSession, type SessionRecord } from '../rules/types';
 
-/** Pages read = end page − start page. */
+/** Pages read = end page − start page + 1 (both pages count: 13 → 20 is 8 pages). */
 export const sessionPages = (s: Pick<CompletedSession, 'startPage' | 'endPage'>): number =>
-  s.endPage - s.startPage;
+  s.endPage - s.startPage + 1;
 
 /** Minutes = end time − start time, minus time spent paused (0 for manual sessions). */
 export function sessionMinutes(

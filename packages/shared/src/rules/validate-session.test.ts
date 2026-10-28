@@ -34,10 +34,11 @@ describe('validateSession', () => {
   });
 
   it('checks page rules', () => {
-    expect(codes({ startPage: -1 })).toEqual(['start_page_negative']);
-    expect(codes({ startPage: 0 })).toEqual([]);
-    expect(codes({ endPage: 10 })).toEqual(['end_page_not_after_start']);
-    expect(codes({ endPage: 5 })).toEqual(['end_page_not_after_start']);
+    expect(codes({ startPage: 0 })).toEqual(['start_page_below_one']);
+    expect(codes({ startPage: -1 })).toEqual(['start_page_below_one']);
+    expect(codes({ startPage: 1 })).toEqual([]);
+    expect(codes({ endPage: 10 })).toEqual([]); // a single page: 10 → 10
+    expect(codes({ endPage: 9 })).toEqual(['end_page_before_start']);
     expect(codes({ endPage: 300 })).toEqual([]);
     expect(codes({ endPage: 301 })).toEqual(['end_page_above_total']);
   });
@@ -45,7 +46,7 @@ describe('validateSession', () => {
   it('reports every problem at once', () => {
     expect(
       codes({ endedAt: new Date('2026-10-29T00:00:00Z'), startPage: 500, endPage: 400 }).sort(),
-    ).toEqual(['end_page_above_total', 'end_page_not_after_start', 'ended_in_future']);
+    ).toEqual(['end_page_above_total', 'end_page_before_start', 'ended_in_future']);
   });
 });
 

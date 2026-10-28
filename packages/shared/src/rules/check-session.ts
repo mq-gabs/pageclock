@@ -23,6 +23,8 @@ export function checkSession(
   return {
     errors: validateSession(draft, context),
     warnings: checkPages(draft, sessions, { now: context.now }),
-    suggestedStartPage: suggestStartPage(bookSessions, draft.startedAt, { excludeId: draft.id }),
+    suggestedStartPage: suggestStartPage(bookSessions, draft.startedAt, context.totalPages, {
+      excludeId: draft.id,
+    }),
   };
 }

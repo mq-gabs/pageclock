@@ -67,7 +67,7 @@ export const readingSessions = sqliteTable(
   (t) => [
     index('reading_sessions_started_at_idx').on(t.startedAt),
     index('reading_sessions_book_id_started_at_idx').on(t.bookId, t.startedAt),
-    check('reading_sessions_start_page_min', sql`${t.startPage} >= 0`),
+    check('reading_sessions_start_page_min', sql`${t.startPage} >= 1`),
     check('reading_sessions_paused_seconds_min', sql`${t.pausedSeconds} >= 0`),
     check('reading_sessions_source_enum', sql`${t.source} in ('timer', 'manual')`),
   ],

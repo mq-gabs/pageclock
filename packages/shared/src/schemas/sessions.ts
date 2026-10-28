@@ -9,10 +9,10 @@ export const sessionErrorCodes = [
   'ended_before_start',
   'ended_in_future',
   'too_long',
-  'start_page_negative',
-  'end_page_not_after_start',
+  'start_page_below_one',
+  'end_page_before_start',
   'end_page_above_total',
-  'start_page_not_below_total',
+  'start_page_above_total',
 ] as const;
 export type SessionErrorCode = (typeof sessionErrorCodes)[number];
 

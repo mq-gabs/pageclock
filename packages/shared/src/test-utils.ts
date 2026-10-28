@@ -2,7 +2,7 @@ import type { SessionDraft, SessionRecord } from './rules/types';
 
 let counter = 0;
 
-/** A completed session; times are ISO strings, pages default to 0 → 10. */
+/** A completed session; times are ISO strings, pages default to 1 → 10 (10 pages). */
 export function session(
   fields: Partial<Omit<SessionRecord, 'startedAt' | 'endedAt'>> & {
     start: string;
@@ -13,7 +13,7 @@ export function session(
   return {
     id: `s${++counter}`,
     bookId: 'book-1',
-    startPage: 0,
+    startPage: 1,
     endPage: 10,
     pausedSeconds: 0,
     ...rest,
@@ -29,7 +29,7 @@ export function draft(
   const { start, end, ...rest } = fields;
   return {
     bookId: 'book-1',
-    startPage: 0,
+    startPage: 1,
     endPage: 10,
     ...rest,
     startedAt: new Date(start),

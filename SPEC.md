@@ -11,16 +11,16 @@ This spec is the source of truth for implementation with Claude Code: build in t
 - **Books:** add (title, author, total pages), edit, delete, status: Want to read, Reading, Finished.
 - **Reading sessions:** log with a start/stop timer or a manual form; edit and delete.
   - Manual form: date, start time, end time, start page, end page.
-  - Auto start page: the start page is prefilled with the end page of the book's latest session (0 for a new book), in both the timer and the form. The user can still change it.
+  - Auto start page: the start page is prefilled with the page after the end page of the book's latest session (page 1 for a new book), in both the timer and the form. The user can still change it.
   - Page check: a new or edited log is compared with the book's sessions just before and after it in time. If the pages don't line up, show a warning (gap = skipped pages, overlap = pages counted twice) and let the user fix it or save anyway.
-  - Hard rules: end time after start time, end page greater than start page, end page not above the book's total pages.
+  - Hard rules: end time after start time, start page at least 1, end page not before start page, end page not above the book's total pages.
 - **Stats:** pages and minutes by week, month and year; average speed; calendar of reading days; current streak.
 
 Later, not in MVP: ISBN lookup, tags, re-reads, goals, import/export, sign-in and multiple users, real book covers, hosting.
 
 ## Metrics
 
-- Pages read = end page − start page
+- Pages read = end page − start page + 1 (both pages count: a session from page 13 to page 20 reads 8 pages)
 - Minutes = end time − start time
 - Speed = total pages ÷ total minutes × 60 (pages/hour)
 - Reading day = a date (your timezone) with at least one session, counted on the session's start date
@@ -29,16 +29,17 @@ Later, not in MVP: ISBN lookup, tags, re-reads, goals, import/export, sign-in an
 
 These rules live in `packages/shared` as pure functions with unit tests, and the API is the final authority.
 
-1. **Auto start page.** When the timer starts or the manual form opens for book B at time t, start page = end page of B's latest session that started before t; 0 if none. The form recomputes it when date or start time changes. The user can override it.
+1. **Auto start page.** When the timer starts or the manual form opens for book B at time t, start page = end page + 1 of B's latest session that started before t (capped at total_pages); 1 if none. The form recomputes it when date or start time changes. The user can override it.
 2. **Hard validation (block save, HTTP 400):**
    - ended_at after started_at, not in the future, duration ≤ 12 h
-   - start_page ≥ 0, end_page > start_page, end_page ≤ book.total_pages
+   - start_page ≥ 1, end_page ≥ start_page, end_page ≤ book.total_pages
 3. **Page check (warn, don't block).** For a new or edited session S of book B, compare with B's sessions immediately before (prev) and after (next) S by started_at, excluding S itself:
-   - Gap: S.start_page > prev.end_page → pages prev.end_page+1 … S.start_page−1 are skipped
-   - Overlap: S.start_page < prev.end_page → pages counted twice
-   - Same two checks between S.end_page and next.start_page
+   - S continues prev when S.start_page = prev.end_page + 1
+   - Gap: S.start_page > prev.end_page + 1 → pages prev.end_page+1 … S.start_page−1 are skipped
+   - Overlap: S.start_page ≤ prev.end_page → pages S.start_page … prev.end_page counted twice
+   - Same two checks between S.end_page and next.start_page (next continues S when next.start_page = S.end_page + 1)
    - Time overlap with any other session → warning
-   - Each warning carries a suggested fix (e.g. start page 174)
+   - Each warning carries a suggested fix (e.g. start page 175 after a session that ended on 174)
 4. **Confirming warnings.** Create/update returns HTTP 409 with the warnings unless the body has `confirmWarnings: true`. The UI shows the warning banner; "Save anyway" resends with the flag.
 5. **Timer.** At most one running session at a time (ended_at is null). Pause stores paused_at; resume adds the paused time to paused_seconds. Stop requires end_page and runs rules 2–4. The running timer is loaded from the API on page load, so it survives reloads and device switches.
 6. **Status.** New books start as want_to_read. Saving the first session moves want_to_read → reading. When a session reaches the last page, the UI offers "Mark as finished" (sets finished_at). The user can change status any time.
@@ -71,7 +72,7 @@ Two tables in SQLite via Drizzle (`apps/api/src/db/schema.ts`). There is no sign
 | ended_at               | timestamp | null while the timer runs |
 | paused_at              | timestamp | set while paused          |
 | paused_seconds         | integer   | default 0                 |
-| start_page             | integer   | not null, ≥ 0             |
+| start_page             | integer   | not null, ≥ 1             |
 | end_page               | integer   | null while running        |
 | source                 | text enum | timer, manual             |
 | created_at, updated_at | timestamp | default now               |
@@ -241,7 +242,7 @@ Eight milestones, each ending in a working app; give Claude Code one milestone p
 - [x] **4. Books.** Books API, BookCover placeholder, and the Library and Book screens (Book without sessions yet), mobile and desktop.
   - Check: add, edit, delete and filter books; screens match Figma at 390 and 1440 px.
 - [x] **5. Manual logging.** Session API (check, create, update, delete), Log session form, sessions list/table with Edit, progress and auto status.
-  - Check: with a previous session ending on page 174, starting at 180 shows the banner; "Start at page 174" fixes it; "Save anyway" saves; the first session moves the book to Reading.
+  - Check: with a previous session ending on page 174, starting at 181 shows the banner; "Start at page 175" fixes it; "Save anyway" saves; the first session moves the book to Reading.
 - [x] **6. Timer.** Timer API, Read screen, Finish session, Now reading card and nav.
   - Check: start, reload the page, timer still running; stop with an end page saves the session; starting a second timer returns 409.
 - [x] **7. Stats.** Stats endpoints and the Stats screen (switcher, totals, bar chart, calendar, streaks).

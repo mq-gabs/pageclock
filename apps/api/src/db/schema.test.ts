@@ -8,7 +8,7 @@ function insertBook(db: Db, totalPages = 100) {
   return db.insert(books).values({ title: 'T', author: 'A', totalPages }).returning().get();
 }
 
-function insertSession(db: Db, bookId: string, startPage = 0) {
+function insertSession(db: Db, bookId: string, startPage = 1) {
   return db
     .insert(readingSessions)
     .values({ bookId, startedAt: new Date(), startPage, source: 'manual' })
@@ -42,6 +42,6 @@ describe('schema', () => {
     expect(() => db.insert(books).values({ title: '', author: 'A', totalPages: 1 }).run()).toThrow(
       /CHECK/,
     );
-    expect(() => insertSession(db, insertBook(db).id, -1)).toThrow(/CHECK/);
+    expect(() => insertSession(db, insertBook(db).id, 0)).toThrow(/CHECK/);
   });
 });

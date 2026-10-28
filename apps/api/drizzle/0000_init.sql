@@ -26,7 +26,7 @@ CREATE TABLE `reading_sessions` (
 	`created_at` integer DEFAULT (cast(unixepoch('subsec') * 1000 as integer)) NOT NULL,
 	`updated_at` integer DEFAULT (cast(unixepoch('subsec') * 1000 as integer)) NOT NULL,
 	FOREIGN KEY (`book_id`) REFERENCES `books`(`id`) ON UPDATE no action ON DELETE cascade,
-	CONSTRAINT "reading_sessions_start_page_min" CHECK("reading_sessions"."start_page" >= 0),
+	CONSTRAINT "reading_sessions_start_page_min" CHECK("reading_sessions"."start_page" >= 1),
 	CONSTRAINT "reading_sessions_paused_seconds_min" CHECK("reading_sessions"."paused_seconds" >= 0),
 	CONSTRAINT "reading_sessions_source_enum" CHECK("reading_sessions"."source" in ('timer', 'manual'))
 );

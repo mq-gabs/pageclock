@@ -72,14 +72,14 @@ describe('pausedSecondsAfterResume', () => {
 });
 
 describe('validateTimerStartPage', () => {
-  it('accepts pages that leave something to read', () => {
-    expect(validateTimerStartPage(0, 320)).toEqual([]);
-    expect(validateTimerStartPage(319, 320)).toEqual([]);
+  it('accepts every page of the book, the last one included', () => {
+    expect(validateTimerStartPage(1, 320)).toEqual([]);
+    expect(validateTimerStartPage(320, 320)).toEqual([]);
   });
 
-  it('rejects the last page and beyond', () => {
-    expect(validateTimerStartPage(320, 320)).toEqual([
-      expect.objectContaining({ field: 'startPage', code: 'start_page_not_below_total' }),
+  it('rejects pages beyond the last one', () => {
+    expect(validateTimerStartPage(321, 320)).toEqual([
+      expect.objectContaining({ field: 'startPage', code: 'start_page_above_total' }),
     ]);
   });
 });

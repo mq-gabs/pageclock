@@ -12,8 +12,8 @@ const pageRange = (from: number, to: number) =>
 /**
  * Rule 3: compare a draft with its neighbours and warn (don't block).
  *
- * Pages read in a session are startPage+1 … endPage, so a session continues the previous one
- * when its start page equals the previous end page.
+ * Pages read in a session are startPage … endPage (both included), so a session continues the
+ * previous one when its start page is the page after the previous end page.
  *
  * - Pages: against the same book's sessions just before (startedAt ≤ draft, ties count as
  *   before) and just after (startedAt > draft).
@@ -44,18 +44,19 @@ export function checkPages(
   }
 
   if (prev && prev.endPage !== null) {
-    const fix = prev.endPage < draft.endPage ? { startPage: prev.endPage } : undefined;
-    if (draft.startPage > prev.endPage) {
+    const continues = prev.endPage + 1;
+    const fix = continues <= draft.endPage ? { startPage: continues } : undefined;
+    if (draft.startPage > continues) {
       warnings.push({
         code: 'page_gap_before',
-        message: `${pageRange(prev.endPage + 1, draft.startPage)} skipped: the previous session ended on page ${prev.endPage}.`,
+        message: `${pageRange(continues, draft.startPage - 1)} skipped: the previous session ended on page ${prev.endPage}.`,
         suggestion: fix,
         sessionId: prev.id,
       });
-    } else if (draft.startPage < prev.endPage) {
+    } else if (draft.startPage < continues) {
       warnings.push({
         code: 'page_overlap_before',
-        message: `${pageRange(draft.startPage + 1, prev.endPage)} counted twice: the previous session ended on page ${prev.endPage}.`,
+        message: `${pageRange(draft.startPage, prev.endPage)} counted twice: the previous session ended on page ${prev.endPage}.`,
         suggestion: fix,
         sessionId: prev.id,
       });
@@ -63,18 +64,19 @@ export function checkPages(
   }
 
   if (next) {
-    const fix = next.startPage > draft.startPage ? { endPage: next.startPage } : undefined;
-    if (draft.endPage < next.startPage) {
+    const continues = next.startPage - 1;
+    const fix = continues >= draft.startPage ? { endPage: continues } : undefined;
+    if (draft.endPage < continues) {
       warnings.push({
         code: 'page_gap_after',
-        message: `${pageRange(draft.endPage + 1, next.startPage)} skipped: the next session starts on page ${next.startPage}.`,
+        message: `${pageRange(draft.endPage + 1, continues)} skipped: the next session starts on page ${next.startPage}.`,
         suggestion: fix,
         sessionId: next.id,
       });
-    } else if (draft.endPage > next.startPage) {
+    } else if (draft.endPage > continues) {
       warnings.push({
         code: 'page_overlap_after',
-        message: `${pageRange(next.startPage + 1, draft.endPage)} counted twice: the next session starts on page ${next.startPage}.`,
+        message: `${pageRange(next.startPage, draft.endPage)} counted twice: the next session starts on page ${next.startPage}.`,
         suggestion: fix,
         sessionId: next.id,
       });

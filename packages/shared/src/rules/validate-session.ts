@@ -33,18 +33,18 @@ export function validateSession(
     });
   }
 
-  if (draft.startPage < 0) {
+  if (draft.startPage < 1) {
     issues.push({
       field: 'startPage',
-      code: 'start_page_negative',
-      message: 'Start page can’t be negative.',
+      code: 'start_page_below_one',
+      message: 'Start page must be at least 1.',
     });
   }
-  if (draft.endPage <= draft.startPage) {
+  if (draft.endPage < draft.startPage) {
     issues.push({
       field: 'endPage',
-      code: 'end_page_not_after_start',
-      message: 'End page must be greater than the start page.',
+      code: 'end_page_before_start',
+      message: 'End page can’t be before the start page.',
     });
   }
   if (draft.endPage > context.totalPages) {

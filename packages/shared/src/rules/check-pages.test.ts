@@ -2,36 +2,42 @@ import { describe, expect, it } from 'vitest';
 import { draft, session } from '../test-utils';
 import { checkPages } from './check-pages';
 
-// prev: Oct 19 20:00–20:30, pages 0 → 174.  next: Oct 23 20:00–20:30, pages 220 → 250.
-const prev = session({ start: '2026-10-19T20:00:00Z', startPage: 0, endPage: 174 });
-const next = session({ start: '2026-10-23T20:00:00Z', startPage: 220, endPage: 250 });
+// prev: Oct 19 20:00–20:30, pages 1 → 174.  next: Oct 23 20:00–20:30, pages 221 → 250.
+const prev = session({ start: '2026-10-19T20:00:00Z', startPage: 1, endPage: 174 });
+const next = session({ start: '2026-10-23T20:00:00Z', startPage: 221, endPage: 250 });
 const at = { start: '2026-10-21T20:00:00Z', end: '2026-10-21T21:00:00Z' };
 
 describe('checkPages: previous session', () => {
-  it('is quiet when the session continues where the previous one ended', () => {
-    expect(checkPages(draft({ ...at, startPage: 174, endPage: 200 }), [prev])).toEqual([]);
+  it('is quiet when the session starts on the page after the previous end', () => {
+    expect(checkPages(draft({ ...at, startPage: 175, endPage: 200 }), [prev])).toEqual([]);
   });
 
-  it('warns about a gap and suggests the previous end page', () => {
-    const [w, ...rest] = checkPages(draft({ ...at, startPage: 180, endPage: 200 }), [prev]);
+  it('warns about a gap and suggests the page after the previous end', () => {
+    const [w, ...rest] = checkPages(draft({ ...at, startPage: 181, endPage: 200 }), [prev]);
     expect(rest).toEqual([]);
     expect(w).toMatchObject({
       code: 'page_gap_before',
-      suggestion: { startPage: 174 },
+      suggestion: { startPage: 175 },
       sessionId: prev.id,
     });
     expect(w?.message).toContain('Pages 175–180 are skipped');
   });
 
   it('names a single skipped page', () => {
-    const [w] = checkPages(draft({ ...at, startPage: 175, endPage: 200 }), [prev]);
+    const [w] = checkPages(draft({ ...at, startPage: 176, endPage: 200 }), [prev]);
     expect(w?.message).toContain('Page 175 is skipped');
   });
 
   it('warns about an overlap', () => {
-    const [w] = checkPages(draft({ ...at, startPage: 170, endPage: 200 }), [prev]);
-    expect(w).toMatchObject({ code: 'page_overlap_before', suggestion: { startPage: 174 } });
+    const [w] = checkPages(draft({ ...at, startPage: 171, endPage: 200 }), [prev]);
+    expect(w).toMatchObject({ code: 'page_overlap_before', suggestion: { startPage: 175 } });
     expect(w?.message).toContain('Pages 171–174 are counted twice');
+  });
+
+  it('counts starting on the previous end page as an overlap', () => {
+    const [w] = checkPages(draft({ ...at, startPage: 174, endPage: 200 }), [prev]);
+    expect(w).toMatchObject({ code: 'page_overlap_before', suggestion: { startPage: 175 } });
+    expect(w?.message).toContain('Page 174 is counted twice');
   });
 
   it('has nothing to compare for the first session of a book', () => {
@@ -39,8 +45,8 @@ describe('checkPages: previous session', () => {
   });
 
   it('only uses the closest previous session', () => {
-    const older = session({ start: '2026-10-10T20:00:00Z', startPage: 0, endPage: 100 });
-    expect(checkPages(draft({ ...at, startPage: 174, endPage: 200 }), [older, prev])).toEqual([]);
+    const older = session({ start: '2026-10-10T20:00:00Z', startPage: 1, endPage: 100 });
+    expect(checkPages(draft({ ...at, startPage: 175, endPage: 200 }), [older, prev])).toEqual([]);
   });
 
   it('omits the suggestion when it would leave no pages to read', () => {
@@ -53,7 +59,7 @@ describe('checkPages: previous session', () => {
     const tie = session({
       start: at.start,
       end: '2026-10-21T20:10:00Z',
-      startPage: 0,
+      startPage: 1,
       endPage: 50,
     });
     const warnings = checkPages(draft({ ...at, startPage: 60, endPage: 80 }), [tie]);
@@ -62,12 +68,12 @@ describe('checkPages: previous session', () => {
 });
 
 describe('checkPages: next session', () => {
-  it('is quiet when the session ends where the next one starts', () => {
-    expect(checkPages(draft({ ...at, startPage: 174, endPage: 220 }), [prev, next])).toEqual([]);
+  it('is quiet when the session ends on the page before the next start', () => {
+    expect(checkPages(draft({ ...at, startPage: 175, endPage: 220 }), [prev, next])).toEqual([]);
   });
 
   it('warns about a gap before the next session', () => {
-    const [w] = checkPages(draft({ ...at, startPage: 174, endPage: 210 }), [prev, next]);
+    const [w] = checkPages(draft({ ...at, startPage: 175, endPage: 210 }), [prev, next]);
     expect(w).toMatchObject({
       code: 'page_gap_after',
       suggestion: { endPage: 220 },
@@ -77,21 +83,21 @@ describe('checkPages: next session', () => {
   });
 
   it('warns about an overlap with the next session', () => {
-    const [w] = checkPages(draft({ ...at, startPage: 174, endPage: 230 }), [prev, next]);
+    const [w] = checkPages(draft({ ...at, startPage: 175, endPage: 230 }), [prev, next]);
     expect(w).toMatchObject({ code: 'page_overlap_after', suggestion: { endPage: 220 } });
     expect(w?.message).toContain('Pages 221–230 are counted twice');
   });
 
   it('reports problems on both sides', () => {
-    const warnings = checkPages(draft({ ...at, startPage: 180, endPage: 230 }), [prev, next]);
+    const warnings = checkPages(draft({ ...at, startPage: 181, endPage: 230 }), [prev, next]);
     expect(warnings.map((w) => w.code)).toEqual(['page_gap_before', 'page_overlap_after']);
   });
 });
 
 describe('checkPages: editing and other books', () => {
   it('ignores the session being edited', () => {
-    const editing = session({ start: at.start, end: at.end, startPage: 174, endPage: 200 });
-    const edited = draft({ ...at, id: editing.id, startPage: 174, endPage: 210 });
+    const editing = session({ start: at.start, end: at.end, startPage: 175, endPage: 200 });
+    const edited = draft({ ...at, id: editing.id, startPage: 175, endPage: 210 });
     expect(checkPages(edited, [prev, editing])).toEqual([]);
   });
 
@@ -99,10 +105,10 @@ describe('checkPages: editing and other books', () => {
     const otherBook = session({
       bookId: 'book-2',
       start: '2026-10-20T20:00:00Z',
-      startPage: 0,
+      startPage: 1,
       endPage: 9,
     });
-    expect(checkPages(draft({ ...at, startPage: 174, endPage: 200 }), [prev, otherBook])).toEqual(
+    expect(checkPages(draft({ ...at, startPage: 175, endPage: 200 }), [prev, otherBook])).toEqual(
       [],
     );
   });
@@ -111,7 +117,7 @@ describe('checkPages: editing and other books', () => {
     const running = session({
       start: '2026-10-21T10:00:00Z',
       end: null,
-      startPage: 174,
+      startPage: 175,
       endPage: null,
     });
     expect(checkPages(draft({ ...at, startPage: 180, endPage: 200 }), [running])).toEqual([]);
@@ -119,7 +125,7 @@ describe('checkPages: editing and other books', () => {
 });
 
 describe('checkPages: time overlap', () => {
-  const base = { startPage: 174, endPage: 200 };
+  const base = { startPage: 175, endPage: 200 };
 
   it('warns when another book’s session overlaps, suggesting a later start', () => {
     const other = session({

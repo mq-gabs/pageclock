@@ -211,12 +211,12 @@ export function listBookSessions(db: Db, bookId: string): Session[] {
 
 /** Rule 1 for the book at `at`. */
 export function suggestedStartPage(db: Db, bookId: string, at: Date): number {
-  findBookRow(db, bookId);
+  const book = findBookRow(db, bookId);
   const sessions = db
     .select()
     .from(readingSessions)
     .where(eq(readingSessions.bookId, bookId))
     .all()
     .map(toRecord);
-  return suggestStartPage(sessions, at);
+  return suggestStartPage(sessions, at, book.totalPages);
 }

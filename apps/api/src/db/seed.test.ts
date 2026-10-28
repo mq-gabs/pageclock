@@ -38,9 +38,9 @@ describe('seed', () => {
 
       let page = 0;
       for (const s of sessions) {
-        expect(s.startPage).toBe(page); // no gaps or overlaps
+        expect(s.startPage).toBe(page + 1); // no gaps or overlaps
         expect(s.endPage).not.toBeNull();
-        expect(s.endPage!).toBeGreaterThan(s.startPage);
+        expect(s.endPage!).toBeGreaterThanOrEqual(s.startPage);
         expect(s.endPage!).toBeLessThanOrEqual(book.totalPages);
         expect(s.endedAt!.getTime()).toBeGreaterThan(s.startedAt.getTime());
         expect(s.endedAt!.getTime()).toBeLessThanOrEqual(now.getTime());

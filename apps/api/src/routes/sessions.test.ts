@@ -39,17 +39,17 @@ const sessionsOf = async (id: string) =>
 const errorOf = (body: unknown) => apiErrorSchema.parse(body).error;
 
 describe('the milestone 5 flow: previous session ends on page 174', () => {
-  it('warns about the gap, suggests 174, and saves with confirmWarnings', async () => {
+  it('warns about the gap, suggests 175, and saves with confirmWarnings', async () => {
     const id = await bookId('Project Hail Mary');
-    const body = { bookId: id, ...slot, startPage: 180, endPage: 200 };
+    const body = { bookId: id, ...slot, startPage: 181, endPage: 200 };
 
     const check = sessionCheckResponseSchema.parse(
       (await request(app).post('/api/reading-sessions/check').send(body)).body,
     );
     expect(check.errors).toEqual([]);
-    expect(check.suggestedStartPage).toBe(174);
+    expect(check.suggestedStartPage).toBe(175);
     expect(check.warnings).toEqual([
-      expect.objectContaining({ code: 'page_gap_before', suggestion: { startPage: 174 } }),
+      expect.objectContaining({ code: 'page_gap_before', suggestion: { startPage: 175 } }),
     ]);
     expect(check.warnings[0]!.message).toContain('Pages 175–180 are skipped');
 
@@ -71,10 +71,10 @@ describe('the milestone 5 flow: previous session ends on page 174', () => {
     const id = await bookId('Project Hail Mary');
     const res = await request(app)
       .post('/api/reading-sessions')
-      .send({ bookId: id, ...slot, startPage: 174, endPage: 190 });
+      .send({ bookId: id, ...slot, startPage: 175, endPage: 190 });
     expect(res.status).toBe(201);
     const saved = saveSessionResponseSchema.parse(res.body);
-    expect(saved.session).toMatchObject({ source: 'manual', startPage: 174, endPage: 190 });
+    expect(saved.session).toMatchObject({ source: 'manual', startPage: 175, endPage: 190 });
     expect(saved.session.metrics).toEqual({ pages: 16, minutes: 30, speed: 32 });
     expect(saved.book).toMatchObject({ progress: 190, percent: 40, status: 'reading' });
     expect(saved.offerFinish).toBe(false);
@@ -84,7 +84,7 @@ describe('the milestone 5 flow: previous session ends on page 174', () => {
     const id = await bookId('Piranesi');
     const res = await request(app)
       .post('/api/reading-sessions')
-      .send({ bookId: id, ...slot, startPage: 0, endPage: 20 });
+      .send({ bookId: id, ...slot, startPage: 1, endPage: 20 });
     expect(res.status).toBe(201);
     expect(saveSessionResponseSchema.parse(res.body).book.status).toBe('reading');
     const { books } = listBooksResponseSchema.parse((await request(app).get('/api/books')).body);
@@ -95,7 +95,7 @@ describe('the milestone 5 flow: previous session ends on page 174', () => {
     const id = await bookId('Project Hail Mary');
     const res = await request(app)
       .post('/api/reading-sessions')
-      .send({ bookId: id, ...slot, startPage: 174, endPage: 476 });
+      .send({ bookId: id, ...slot, startPage: 175, endPage: 476 });
     const saved = saveSessionResponseSchema.parse(res.body);
     expect(saved.offerFinish).toBe(true);
     expect(saved.book.status).toBe('reading'); // finishing stays the user's choice
@@ -106,7 +106,7 @@ describe('POST /api/reading-sessions: hard rules', () => {
   it.each([
     [
       'end before start',
-      { startedAt: minutesAgo(60), endedAt: minutesAgo(90), startPage: 174, endPage: 190 },
+      { startedAt: minutesAgo(60), endedAt: minutesAgo(90), startPage: 175, endPage: 190 },
       'endedAt',
     ],
     [
@@ -114,19 +114,19 @@ describe('POST /api/reading-sessions: hard rules', () => {
       {
         startedAt: minutesAgo(10),
         endedAt: new Date(now + 3_600_000).toISOString(),
-        startPage: 174,
+        startPage: 175,
         endPage: 190,
       },
       'endedAt',
     ],
     [
       'longer than 12 hours',
-      { startedAt: minutesAgo(13 * 60), endedAt: minutesAgo(10), startPage: 174, endPage: 190 },
+      { startedAt: minutesAgo(13 * 60), endedAt: minutesAgo(10), startPage: 175, endPage: 190 },
       'endedAt',
     ],
-    ['end page not after start', { ...slot, startPage: 174, endPage: 174 }, 'endPage'],
-    ['end page above the total', { ...slot, startPage: 174, endPage: 477 }, 'endPage'],
-    ['negative start page', { ...slot, startPage: -1, endPage: 10 }, 'startPage'],
+    ['end page before start', { ...slot, startPage: 175, endPage: 174 }, 'endPage'],
+    ['end page above the total', { ...slot, startPage: 175, endPage: 477 }, 'endPage'],
+    ['start page below 1', { ...slot, startPage: 0, endPage: 10 }, 'startPage'],
   ])('rejects %s with 400', async (_name, fields, field) => {
     const res = await request(app)
       .post('/api/reading-sessions')
@@ -143,7 +143,7 @@ describe('POST /api/reading-sessions: hard rules', () => {
       .send({
         bookId: await bookId('Project Hail Mary'),
         ...slot,
-        startPage: 180,
+        startPage: 181,
         endPage: 900,
         confirmWarnings: true,
       });
@@ -164,7 +164,7 @@ describe('POST /api/reading-sessions: hard rules', () => {
       (
         await request(app)
           .post('/api/reading-sessions')
-          .send({ bookId: id, startedAt: 'today', endedAt: slot.endedAt, startPage: 0, endPage: 1 })
+          .send({ bookId: id, startedAt: 'today', endedAt: slot.endedAt, startPage: 1, endPage: 1 })
       ).status,
     ).toBe(400);
   });
@@ -172,7 +172,7 @@ describe('POST /api/reading-sessions: hard rules', () => {
   it('returns 404 for an unknown book', async () => {
     const res = await request(app)
       .post('/api/reading-sessions')
-      .send({ bookId: missingId, ...slot, startPage: 0, endPage: 10 });
+      .send({ bookId: missingId, ...slot, startPage: 1, endPage: 10 });
     expect(res.status).toBe(404);
   });
 });
@@ -182,7 +182,7 @@ describe('POST /api/reading-sessions/check', () => {
     const id = await bookId('Project Hail Mary');
     const res = await request(app)
       .post('/api/reading-sessions/check')
-      .send({ bookId: id, ...slot, startPage: 174, endPage: 900 });
+      .send({ bookId: id, ...slot, startPage: 175, endPage: 900 });
     expect(res.status).toBe(200);
     expect(sessionCheckResponseSchema.parse(res.body).errors.map((e) => e.code)).toEqual([
       'end_page_above_total',
@@ -199,7 +199,7 @@ describe('POST /api/reading-sessions/check', () => {
         bookId: await bookId('Piranesi'),
         startedAt: latest.startedAt,
         endedAt: latest.endedAt,
-        startPage: 0,
+        startPage: 1,
         endPage: 10,
       });
     const { warnings } = sessionCheckResponseSchema.parse(res.body);
@@ -216,13 +216,13 @@ describe('POST /api/reading-sessions/check', () => {
       bookId: id,
       startedAt: latest!.startedAt,
       endedAt: latest!.endedAt,
-      startPage: 162,
+      startPage: 163,
       endPage: 174,
     });
     expect(sessionCheckResponseSchema.parse(res.body)).toMatchObject({
       errors: [],
       warnings: [],
-      suggestedStartPage: 162,
+      suggestedStartPage: 163,
     });
   });
 
@@ -279,7 +279,7 @@ describe('PATCH /api/reading-sessions/:id', () => {
       .values({
         bookId: await bookId('Piranesi'),
         startedAt: new Date(now - 60_000),
-        startPage: 0,
+        startPage: 1,
         source: 'timer',
       })
       .returning()
@@ -324,7 +324,7 @@ describe('GET /api/books/:id/sessions', () => {
     const sessions = await sessionsOf(await bookId('Project Hail Mary'));
     expect(sessions).toHaveLength(7);
     expect(sessions[0]).toMatchObject({
-      startPage: 162,
+      startPage: 163,
       endPage: 174,
       metrics: { pages: 12, minutes: 20 },
     });
@@ -342,12 +342,12 @@ describe('GET /api/books/:id/suggested-start-page', () => {
   it('uses the latest session before `at`, defaulting to now', async () => {
     const id = await bookId('Project Hail Mary');
     expect((await request(app).get(`/api/books/${id}/suggested-start-page`)).body).toEqual({
-      startPage: 174,
+      startPage: 175,
     });
     const longAgo = new Date(now - 60 * 86_400_000).toISOString();
     expect(
       (await request(app).get(`/api/books/${id}/suggested-start-page?at=${longAgo}`)).body,
-    ).toEqual({ startPage: 0 });
+    ).toEqual({ startPage: 1 });
   });
 
   it('rejects a malformed `at` and an unknown book', async () => {

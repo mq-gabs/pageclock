@@ -35,7 +35,7 @@ function makeSchema(startPage: number, totalPages: number) {
     endPage: z
       .number({ error: 'Enter the page you stopped on' })
       .int('Use a whole page number')
-      .gt(startPage, `You started on page ${startPage}`)
+      .min(startPage, `You started on page ${startPage}`)
       .max(totalPages, `The book has ${totalPages} pages`),
   });
 }
@@ -87,7 +87,7 @@ export function FinishSessionForm({
   );
   const minutes = sessionMinutes({ startedAt, endedAt, pausedSeconds: session.pausedSeconds });
   const parsed = schema.safeParse({ endPage });
-  const pages = parsed.success ? parsed.data.endPage - session.startPage : null;
+  const pages = parsed.success ? parsed.data.endPage - session.startPage + 1 : null;
   const speed = pages === null ? null : readingSpeed(pages, minutes);
 
   // Rule 3: check the pages live, as the Log session form does.
@@ -182,7 +182,7 @@ export function FinishSessionForm({
           type="number"
           inputMode="numeric"
           autoFocus
-          min={session.startPage + 1}
+          min={session.startPage}
           max={book.totalPages}
           error={errors.endPage?.message}
           helper={`Started on page ${session.startPage}. Book has ${book.totalPages} pages.`}

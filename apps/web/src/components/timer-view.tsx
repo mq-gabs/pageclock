@@ -137,8 +137,8 @@ function StartPageField({ timer, previous }: { timer: Timer; previous: Timer['pr
   const commit = () => {
     const page = Number(value);
     if (value.trim() === '' || !Number.isInteger(page)) return setError('Enter the start page');
-    if (page < 0) return setError('Start page can’t be negative');
-    if (page >= book.totalPages) return setError(`Start below page ${book.totalPages}`);
+    if (page < 1) return setError('Start page must be at least 1');
+    if (page > book.totalPages) return setError(`The book has ${book.totalPages} pages`);
     setError(undefined);
     if (page === session.startPage) return;
     update.mutate(
@@ -159,16 +159,16 @@ function StartPageField({ timer, previous }: { timer: Timer; previous: Timer['pr
     </>
   );
   let helper: React.ReactNode = null;
-  if (previous && session.startPage === previous.endPage) {
+  if (previous && session.startPage === Math.min(previous.endPage + 1, book.totalPages)) {
     helper = (
       <>
-        Filled in from where your last session ended (
+        Filled in from the page after your last session ended (
         {formatShortDate(previous.startedAt, appTimeZone)}). {action}
       </>
     );
   } else if (previous) {
     helper = `Your last session ended on page ${previous.endPage}.`;
-  } else if (session.startPage === 0) {
+  } else if (session.startPage === 1) {
     helper = <>First session of this book. {action}</>;
   }
 
@@ -178,8 +178,8 @@ function StartPageField({ timer, previous }: { timer: Timer; previous: Timer['pr
         label="Start page"
         type="number"
         inputMode="numeric"
-        min={0}
-        max={book.totalPages - 1}
+        min={1}
+        max={book.totalPages}
         value={value}
         error={error}
         onChange={(e) => setValue(e.target.value)}

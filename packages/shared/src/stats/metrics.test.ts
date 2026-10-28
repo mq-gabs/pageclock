@@ -11,8 +11,9 @@ describe('metrics', () => {
     endPage: 70,
   });
 
-  it('pages read = end page − start page', () => {
-    expect(sessionPages({ startPage: 40, endPage: 70 })).toBe(30);
+  it('pages read = end page − start page + 1', () => {
+    expect(sessionPages({ startPage: 41, endPage: 70 })).toBe(30);
+    expect(sessionPages({ startPage: 13, endPage: 13 })).toBe(1);
   });
 
   it('minutes = end time − start time', () => {

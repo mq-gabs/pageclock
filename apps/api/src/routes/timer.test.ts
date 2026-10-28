@@ -51,7 +51,7 @@ describe('the milestone 6 flow', () => {
     const timer = timerOf(started.body)!;
     expect(timer.session).toMatchObject({
       bookId: id,
-      startPage: 174, // rule 1
+      startPage: 175, // rule 1: the page after the last session’s end
       endedAt: null,
       endPage: null,
       source: 'timer',
@@ -68,7 +68,7 @@ describe('the milestone 6 flow', () => {
     const stopped = await request(app).post('/api/timer/stop').send({ endPage: 200 });
     expect(stopped.status).toBe(200);
     const saved = saveSessionResponseSchema.parse(stopped.body);
-    expect(saved.session).toMatchObject({ id: timer.session.id, startPage: 174, endPage: 200 });
+    expect(saved.session).toMatchObject({ id: timer.session.id, startPage: 175, endPage: 200 });
     expect(saved.session.metrics).toEqual({ pages: 26, minutes: 40, speed: 39 });
     expect(saved.book.progress).toBe(200);
     expect(await getTimer()).toBeNull();
@@ -92,10 +92,10 @@ describe('the milestone 6 flow', () => {
 });
 
 describe('POST /api/timer/start', () => {
-  it('uses the given start page and starts a new book at 0 by default', async () => {
+  it('uses the given start page and starts a new book on page 1 by default', async () => {
     const id = await bookId('Piranesi');
     const timer = timerOf((await request(app).post('/api/timer/start').send({ bookId: id })).body);
-    expect(timer?.session.startPage).toBe(0);
+    expect(timer?.session.startPage).toBe(1);
     expect(timer?.previous).toBeNull();
     // Discarding a timer deletes its session.
     await request(app).delete(`/api/reading-sessions/${timer!.session.id}`).expect(204);
@@ -105,8 +105,8 @@ describe('POST /api/timer/start', () => {
     expect(timerOf(chosen.body)?.session.startPage).toBe(12);
   });
 
-  it('rejects bad bodies, unknown books and a start page with nothing left to read', async () => {
-    const bad = await request(app).post('/api/timer/start').send({ bookId: 'nope', startPage: -1 });
+  it('rejects bad bodies, unknown books and a start page past the last page', async () => {
+    const bad = await request(app).post('/api/timer/start').send({ bookId: 'nope', startPage: 0 });
     expect(bad.status).toBe(400);
     expect(Object.keys(errorOf(bad.body).fields ?? {}).sort()).toEqual(['bookId', 'startPage']);
 
@@ -115,7 +115,7 @@ describe('POST /api/timer/start', () => {
 
     const atEnd = await request(app)
       .post('/api/timer/start')
-      .send({ bookId: await bookId('Piranesi'), startPage: 272 });
+      .send({ bookId: await bookId('Piranesi'), startPage: 273 });
     expect(atEnd.status).toBe(400);
     expect(errorOf(atEnd.body).fields?.startPage).toBeDefined();
     expect(await getTimer()).toBeNull();
@@ -138,7 +138,7 @@ describe('PATCH /api/timer', () => {
       .post('/api/timer/start')
       .send({ bookId: await bookId('Project Hail Mary') });
     expect((await request(app).patch('/api/timer').send({ startPage: 'x' })).status).toBe(400);
-    expect((await request(app).patch('/api/timer').send({ startPage: 476 })).status).toBe(400);
+    expect((await request(app).patch('/api/timer').send({ startPage: 477 })).status).toBe(400);
   });
 
   it('answers 404 without a running timer', async () => {
@@ -231,11 +231,11 @@ describe('POST /api/timer/stop', () => {
   });
 
   it('answers 409 with page warnings until they are confirmed', async () => {
-    await request(app).patch('/api/timer').send({ startPage: 180 });
+    await request(app).patch('/api/timer').send({ startPage: 181 });
     const conflict = await request(app).post('/api/timer/stop').send({ endPage: 200 });
     expect(conflict.status).toBe(409);
     expect(sessionWarningsResponseSchema.parse(conflict.body).warnings).toEqual([
-      expect.objectContaining({ code: 'page_gap_before', suggestion: { startPage: 174 } }),
+      expect.objectContaining({ code: 'page_gap_before', suggestion: { startPage: 175 } }),
     ]);
     expect(await getTimer()).not.toBeNull();
 

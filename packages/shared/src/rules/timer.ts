@@ -23,16 +23,16 @@ export function pausedSecondsAfterResume(timer: TimerState, now: Date): number {
 }
 
 /**
- * A timer's start page must leave at least one page to read (rule 2 needs end page > start
- * page ≤ total pages). Negative pages are rejected by the request schema.
+ * A timer's start page must be a page of the book, so it can end on that page or later
+ * (rule 2). Pages below 1 are rejected by the request schema.
  */
 export function validateTimerStartPage(startPage: number, totalPages: number): SessionIssue[] {
-  if (startPage < totalPages) return [];
+  if (startPage <= totalPages) return [];
   return [
     {
       field: 'startPage',
-      code: 'start_page_not_below_total',
-      message: `Start page must be below the book’s ${totalPages} pages.`,
+      code: 'start_page_above_total',
+      message: `Start page can’t be above the book’s ${totalPages} pages.`,
     },
   ];
 }

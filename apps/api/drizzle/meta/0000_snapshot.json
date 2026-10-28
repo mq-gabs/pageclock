@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "bcdac40e-1933-4dfc-9a53-4e705f91dfb8",
+  "id": "c81f9e43-2379-4318-87c4-9f3f09b6d937",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "books": {
@@ -211,7 +211,7 @@
       "checkConstraints": {
         "reading_sessions_start_page_min": {
           "name": "reading_sessions_start_page_min",
-          "value": "\"reading_sessions\".\"start_page\" >= 0"
+          "value": "\"reading_sessions\".\"start_page\" >= 1"
         },
         "reading_sessions_paused_seconds_min": {
           "name": "reading_sessions_paused_seconds_min",

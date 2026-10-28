@@ -36,12 +36,14 @@ function makeSchema(totalPages: number) {
       date: dateKeySchema,
       startTime: time('Enter a start time'),
       endTime: time('Enter an end time'),
-      startPage: pageNumber('Enter the start page').min(0, 'Start page can’t be negative'),
+      startPage: pageNumber('Enter the start page')
+        .min(1, 'Start page must be at least 1')
+        .max(totalPages, `The book has ${totalPages} pages`),
       endPage: pageNumber('Enter the end page').max(totalPages, `The book has ${totalPages} pages`),
     })
-    .refine((v) => v.endPage > v.startPage, {
+    .refine((v) => v.endPage >= v.startPage, {
       path: ['endPage'],
-      message: 'End page must be greater than the start page',
+      message: 'End page can’t be before the start page',
     });
 }
 type FormValues = z.infer<ReturnType<typeof makeSchema>>;
@@ -72,7 +74,7 @@ function defaultValues(book: BookWithProgress, session?: Session): Partial<FormV
     date: start.date,
     startTime: start.time,
     endTime: toLocalParts(end, appTimeZone).time,
-    startPage: book.progress,
+    startPage: Math.min(book.progress + 1, book.totalPages),
   };
 }
 
@@ -226,7 +228,7 @@ function SessionForm({
     if (!parsed.success) return null;
     const { startedAt, endedAt } = rangeFromForm(parsed.data, appTimeZone);
     const minutes = (endedAt.getTime() - startedAt.getTime()) / 60_000;
-    return `${parsed.data.endPage - parsed.data.startPage} pages · ${formatSessionDuration(minutes)}`;
+    return `${parsed.data.endPage - parsed.data.startPage + 1} pages · ${formatSessionDuration(minutes)}`;
   })();
 
   return (
@@ -265,9 +267,10 @@ function SessionForm({
           label="Start page"
           type="number"
           inputMode="numeric"
-          min={0}
+          min={1}
+          max={book.totalPages}
           error={errors.startPage?.message}
-          helper={startPageEdited ? undefined : 'Where your last session ended'}
+          helper={startPageEdited ? undefined : 'After where your last session ended'}
           {...form.register('startPage', {
             valueAsNumber: true,
             onChange: () => setStartPageEdited(true),

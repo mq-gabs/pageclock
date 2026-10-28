@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { bookWithProgressSchema } from './books';
 import { sessionSchema } from './sessions';
 
-const startPage = z.int('Use a whole page number').min(0, 'Start page can’t be negative');
+const startPage = z.int('Use a whole page number').min(1, 'Start page must be at least 1');
 
 /** Body of `POST /api/timer/start`; without `startPage` the API applies rule 1. */
 export const startTimerSchema = z.object({

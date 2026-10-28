@@ -19,7 +19,7 @@ interface DemoBook {
   sessions: DemoSession[];
 }
 
-// Pages chain from one session to the next (each starts where the previous ended), sessions
+// Pages chain from one session to the next (each starts on the page after the previous end), sessions
 // never overlap in time, and none start today, so every row passes the hard rules.
 const demoBooks: DemoBook[] = [
   {
@@ -86,7 +86,7 @@ const insertBookSchema = createInsertSchema(books, {
   totalPages: (s) => s.min(bookLimits.totalPagesMin).max(bookLimits.totalPagesMax),
 });
 const insertSessionSchema = createInsertSchema(readingSessions, {
-  startPage: (s) => s.min(0),
+  startPage: (s) => s.min(1),
 });
 
 function localStart(now: Date, daysAgo: number, localTime: string, timeZone: string): Date {
@@ -113,7 +113,7 @@ export function seed(db: Db, now = new Date(), timeZone = config.appTimezone) {
           bookId,
           startedAt,
           endedAt,
-          startPage: page,
+          startPage: page + 1,
           endPage: page + pages,
           source: daysAgo % 2 === 0 ? 'manual' : 'timer',
           createdAt: endedAt,

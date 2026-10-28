@@ -22,11 +22,16 @@ export function latestSessionBefore<T extends Candidate>(
   return latest;
 }
 
-/** Rule 1: the end page of the book's latest session that started before `at`, or 0. */
+/**
+ * Rule 1: the page after the end page of the book's latest session that started before `at`,
+ * or 1 with none. Never above `totalPages`, so a finished book suggests its last page.
+ */
 export function suggestStartPage(
   sessions: readonly Candidate[],
   at: Date,
+  totalPages: number,
   options: { excludeId?: string } = {},
 ): number {
-  return latestSessionBefore(sessions, at, options)?.endPage ?? 0;
+  const previous = latestSessionBefore(sessions, at, options);
+  return previous ? Math.min(previous.endPage + 1, totalPages) : 1;
 }
