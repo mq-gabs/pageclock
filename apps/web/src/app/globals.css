@@ -91,5 +91,7 @@
   }
   body {
     @apply bg-bg text-ink font-sans text-body antialiased;
+    /* Figma text uses Inter's "normal" line height, not Tailwind's 1.5. */
+    line-height: normal;
   }
 }

@@ -7,6 +7,9 @@ import { config } from '../config';
 import * as schema from './schema';
 
 export type Db = BetterSQLite3Database<typeof schema> & { $client: Database.Database };
+export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
+/** For helpers that run both inside and outside a transaction. */
+export type DbOrTx = Db | Tx;
 
 /** Opens a SQLite database (a file path or ':memory:') with foreign keys on. */
 export function createDb(url: string = config.databaseUrl): Db {

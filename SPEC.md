@@ -237,7 +237,7 @@ Eight milestones, each ending in a working app; give Claude Code one milestone p
   - Check: a fresh database migrates and seeds, and `GET /api/books` returns the seeded books.
 - [x] **3. Shared rules and stats.** suggestStartPage, validateSession, checkPages, summary, daily, streaks, all pure and tested.
   - Check: tests cover gap, overlap, no previous session, sessions near midnight in America/Fortaleza, and the Metrics formulas.
-- [ ] **4. Books.** Books API, BookCover placeholder, and the Library and Book screens (Book without sessions yet), mobile and desktop.
+- [x] **4. Books.** Books API, BookCover placeholder, and the Library and Book screens (Book without sessions yet), mobile and desktop.
   - Check: add, edit, delete and filter books; screens match Figma at 390 and 1440 px.
 - [ ] **5. Manual logging.** Session API (check, create, update, delete), Log session form, sessions list/table with Edit, progress and auto status.
   - Check: with a previous session ending on page 174, starting at 180 shows the banner; "Start at page 174" fixes it; "Save anyway" saves; the first session moves the book to Reading.

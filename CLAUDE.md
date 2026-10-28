@@ -39,3 +39,7 @@
 - Minutes exclude `pausedSeconds`. Stats ignore running timers. Time-overlap warnings check sessions of every book, page checks only the same book.
 - Stats work on local date keys (`yyyy-MM-dd`); turn instants into keys with `toDateKey(instant, timeZone)` and do calendar math with the key helpers in `packages/shared/src/stats/dates.ts`.
 - Shared test data: `session()` / `draft()` in `packages/shared/src/test-utils.ts`; the hand-checked stats fixture is `packages/shared/src/stats/fixtures.ts`.
+- Web data: `apps/web/src/lib/api.ts` (fetch + response validation with shared schemas, throws `ApiRequestError` with `fields`) and `lib/queries.ts` (TanStack Query hooks, keys under `['books', …]`). Forms map `error.fields` back onto inputs with `setError`.
+- Figma uses Inter's `normal` line height (set on `body`); sizes outside the token scale (15, 14, 17, 11 px) use arbitrary `text-[15px]` classes. `cn()` knows the custom `text-*` size tokens, so `cn('text-label', 'text-muted')` keeps both.
+- Icons are lucide-react (same glyphs as the Figma SVGs) so they take token colors via `currentColor`.
+- Dialogs (`components/ui/dialog.tsx`) are full screen below `lg` and a centered 480 px card from `lg`.
