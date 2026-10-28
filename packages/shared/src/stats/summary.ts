@@ -1,6 +1,6 @@
 import { isCompleted, type SessionRecord } from '../rules/types';
 import type { DateKey, StatsPeriod } from '../schemas/stats';
-import { periodRange, previousPeriodRange, toDateKey, type DateRange } from './dates';
+import { daysBetween, periodRange, previousPeriodRange, toDateKey, type DateRange } from './dates';
 import { totals, type Totals } from './metrics';
 
 export interface PeriodTotals extends DateRange, Totals {
@@ -11,6 +11,8 @@ export interface Summary {
   period: StatsPeriod;
   current: PeriodTotals;
   previous: PeriodTotals;
+  /** Days of the current period up to `today` (all of them for a past period, 0 for a future one). */
+  daysSoFar: number;
   /** Whole-percent change vs the previous period; null when the previous value is 0 or null. */
   change: {
     pages: number | null;
@@ -42,10 +44,18 @@ function percentChange(current: number | null, previous: number | null): number 
   return Math.round(((current - previous) / previous) * 100);
 }
 
-/** Totals, average speed and reading days for the week/month/year containing `date`. */
+function daysSoFar(range: DateRange, today: DateKey): number {
+  if (today < range.from) return 0;
+  return daysBetween(range.from, today < range.to ? today : range.to) + 1;
+}
+
+/**
+ * Totals, average speed and reading days for the week/month/year containing `date`, compared
+ * with the period before. `today` defaults to the end of the period.
+ */
 export function summary(
   sessions: readonly SessionRecord[],
-  options: { period: StatsPeriod; date: DateKey; timeZone: string },
+  options: { period: StatsPeriod; date: DateKey; timeZone: string; today?: DateKey },
 ): Summary {
   const current = periodTotals(
     sessions,
@@ -61,6 +71,7 @@ export function summary(
     period: options.period,
     current,
     previous,
+    daysSoFar: daysSoFar(current, options.today ?? current.to),
     change: {
       pages: percentChange(current.pages, previous.pages),
       minutes: percentChange(current.minutes, previous.minutes),

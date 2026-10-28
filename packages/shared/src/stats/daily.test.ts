@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { daily, heatLevel, readingDays } from './daily';
+import { bestDay, byMonth, daily, heatLevel, readingDays } from './daily';
 import { sessions, TZ } from './fixtures';
 
 describe('daily', () => {
@@ -48,5 +48,33 @@ describe('readingDays', () => {
 describe('heatLevel', () => {
   it('uses the calendar buckets 0, 1–44, 45–59, 60–79, 80+', () => {
     expect([0, 1, 44, 45, 59, 60, 79, 80, 500].map(heatLevel)).toEqual([0, 1, 1, 2, 2, 3, 3, 4, 4]);
+  });
+});
+
+describe('bestDay', () => {
+  it('picks the day with the most pages, the earliest on a tie', () => {
+    const days = daily(sessions, { from: '2026-10-19', to: '2026-10-28', timeZone: TZ });
+    expect(bestDay(days)).toMatchObject({ date: '2026-10-19', pages: 50 });
+    const tie = [
+      { date: '2026-10-01', pages: 20, minutes: 30, sessions: 1 },
+      { date: '2026-10-02', pages: 20, minutes: 10, sessions: 1 },
+    ];
+    expect(bestDay(tie)?.date).toBe('2026-10-01');
+  });
+
+  it('is null when nothing was read', () => {
+    expect(bestDay([])).toBeNull();
+    expect(bestDay(daily([], { from: '2026-10-01', to: '2026-10-03', timeZone: TZ }))).toBeNull();
+  });
+});
+
+describe('byMonth', () => {
+  it('adds up the days of each month, in order', () => {
+    const days = daily(sessions, { from: '2026-09-01', to: '2026-11-30', timeZone: TZ });
+    expect(byMonth(days)).toEqual([
+      { month: '2026-09', pages: 100, minutes: 120, sessions: 1 },
+      { month: '2026-10', pages: 135, minutes: 185, sessions: 4 },
+      { month: '2026-11', pages: 0, minutes: 0, sessions: 0 },
+    ]);
   });
 });

@@ -3,6 +3,11 @@ import type { BookWithProgress } from '@reading-tracker/shared';
 import {
   formatBookMeta,
   formatClock,
+  formatCount,
+  formatDateKey,
+  formatDelta,
+  formatKeyRange,
+  formatMinutesDelta,
   formatDayLabel,
   formatDuration,
   formatRelativeDay,
@@ -78,5 +83,35 @@ describe('formatClock', () => {
     expect(formatClock(0)).toBe('00:00:00');
     expect(formatClock(41 * 60 + 12)).toBe('00:41:12');
     expect(formatClock(12 * 3600 + 5.9)).toBe('12:00:05');
+  });
+});
+
+describe('date keys', () => {
+  it('formats a key without shifting it through the local time zone', () => {
+    expect(formatDateKey('2026-10-01', 'MMM d')).toBe('Oct 1');
+    expect(formatDateKey('2026-10-31', 'MMMM yyyy')).toBe('October 2026');
+  });
+
+  it('formats ranges', () => {
+    expect(formatKeyRange('2026-06-03', '2026-06-23')).toBe('Jun 3 – Jun 23');
+    expect(formatKeyRange('2026-06-03', '2026-06-03')).toBe('Jun 3');
+  });
+});
+
+describe('deltas', () => {
+  it('formats counts with separators', () => {
+    expect(formatCount(1240)).toBe('1,240');
+  });
+
+  it('signs differences', () => {
+    expect(formatDelta(18, '%')).toBe('+18%');
+    expect(formatDelta(-3.4, ' p/h')).toBe('−3 p/h');
+    expect(formatDelta(0, '%')).toBe('+0%');
+  });
+
+  it('formats minute differences like Figma', () => {
+    expect(formatMinutesDelta(125)).toBe('+2h 05m');
+    expect(formatMinutesDelta(-45)).toBe('−45 min');
+    expect(formatMinutesDelta(-600)).toBe('−10h 00m');
   });
 });

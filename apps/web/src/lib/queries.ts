@@ -8,6 +8,9 @@ import {
   listSessionsResponseSchema,
   saveSessionResponseSchema,
   sessionCheckResponseSchema,
+  statsDailyResponseSchema,
+  statsStreaksResponseSchema,
+  statsSummaryResponseSchema,
   suggestedStartPageResponseSchema,
   timerResponseSchema,
   type CheckSessionBody,
@@ -15,6 +18,7 @@ import {
   type CreateSessionInput,
   type ListBooksQuery,
   type StartTimerInput,
+  type StatsPeriod,
   type StopTimerInput,
   type TimerResponse,
   type UpdateBookInput,
@@ -28,6 +32,11 @@ export const bookKeys = {
   list: (query: ListBooksQuery) => ['books', 'list', query] as const,
   detail: (id: string) => ['books', 'detail', id] as const,
   sessions: (id: string) => ['books', 'sessions', id] as const,
+  // Stats live under 'books' so every book and session change refreshes them.
+  summary: (period: StatsPeriod, date: string | undefined) =>
+    ['books', 'stats', 'summary', period, date ?? 'today'] as const,
+  daily: (from: string, to: string) => ['books', 'stats', 'daily', from, to] as const,
+  streaks: ['books', 'stats', 'streaks'] as const,
 };
 
 export function useBooks(query: ListBooksQuery) {
@@ -182,5 +191,32 @@ export function useDiscardTimer() {
       queryClient.setQueryData<TimerResponse>(timerKey, { timer: null });
       await queryClient.invalidateQueries({ queryKey: bookKeys.all });
     },
+  });
+}
+
+/** Without `date` the API uses today; the response says which day that is. */
+export function useStatsSummary(period: StatsPeriod, date?: string) {
+  const search = new URLSearchParams({ period, ...(date ? { date } : {}) });
+  return useQuery({
+    queryKey: bookKeys.summary(period, date),
+    queryFn: () => api('GET', `/api/stats/summary?${search}`, statsSummaryResponseSchema),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useStatsDaily(range: { from: string; to: string } | undefined) {
+  return useQuery({
+    queryKey: bookKeys.daily(range?.from ?? '', range?.to ?? ''),
+    queryFn: () =>
+      api('GET', `/api/stats/daily?from=${range?.from}&to=${range?.to}`, statsDailyResponseSchema),
+    enabled: range !== undefined,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useStreaks() {
+  return useQuery({
+    queryKey: bookKeys.streaks,
+    queryFn: () => api('GET', '/api/stats/streaks', statsStreaksResponseSchema),
   });
 }

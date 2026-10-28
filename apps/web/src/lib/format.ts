@@ -61,3 +61,32 @@ export function formatClock(seconds: number): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${pad(Math.floor(total / 3600))}:${pad(Math.floor(total / 60) % 60)}:${pad(total % 60)}`;
 }
+
+/** Formats a `yyyy-MM-dd` key with a date-fns pattern, e.g. ("2026-10-20", "MMM d") → "Oct 20". */
+export function formatDateKey(key: string, pattern: string): string {
+  const [y = 0, m = 1, d = 1] = key.split('-').map(Number);
+  return format(new TZDate(y, m - 1, d, 'UTC'), pattern);
+}
+
+/** "Jun 3 – Jun 23", or one date when both are the same day. */
+export function formatKeyRange(from: string, to: string): string {
+  const a = formatDateKey(from, 'MMM d');
+  return from === to ? a : `${a} – ${formatDateKey(to, 'MMM d')}`;
+}
+
+/** 1240 → "1,240". */
+export const formatCount = (n: number): string => Math.round(n).toLocaleString('en-US');
+
+const sign = (n: number) => (n < 0 ? '−' : '+');
+
+/** A difference in minutes: 125 → "+2h 05m", −45 → "−45 min". */
+export function formatMinutesDelta(minutes: number): string {
+  const total = Math.abs(Math.round(minutes));
+  if (total < 60) return `${sign(minutes)}${total} min`;
+  const m = String(total % 60).padStart(2, '0');
+  return `${sign(minutes)}${Math.floor(total / 60)}h ${m}m`;
+}
+
+/** A signed whole number with a unit: (18, "%") → "+18%", (−3, " p/h") → "−3 p/h". */
+export const formatDelta = (n: number, unit = ''): string =>
+  `${sign(n)}${Math.abs(Math.round(n))}${unit}`;

@@ -62,3 +62,25 @@ describe('summary', () => {
     });
   });
 });
+
+describe('summary: daysSoFar', () => {
+  const month = (date: string, today?: string) =>
+    summary(sessions, { period: 'month', date, timeZone: TZ, today }).daysSoFar;
+
+  it('counts the days of the current period up to today', () => {
+    expect(month('2026-10-28', '2026-10-28')).toBe(28);
+    expect(month('2026-10-01', '2026-10-01')).toBe(1);
+  });
+
+  it('counts every day of a past period, and none of a future one', () => {
+    expect(month('2026-09-15', '2026-10-28')).toBe(30);
+    expect(month('2026-11-15', '2026-10-28')).toBe(0);
+  });
+
+  it('defaults to the whole period', () => {
+    expect(month('2026-02-10')).toBe(28);
+    expect(summary(sessions, { period: 'week', date: '2026-10-28', timeZone: TZ }).daysSoFar).toBe(
+      7,
+    );
+  });
+});

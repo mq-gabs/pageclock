@@ -35,6 +35,35 @@ export function daily(
   return [...byDay.values()];
 }
 
+/** The day (or month) with the most pages, the earliest on a tie; null when nothing was read. */
+export function bestDay<T extends { pages: number }>(days: readonly T[]): T | null {
+  let best: T | null = null;
+  for (const day of days) if (day.pages > (best?.pages ?? 0)) best = day;
+  return best;
+}
+
+export interface MonthlyStat {
+  /** `yyyy-MM` */
+  month: string;
+  pages: number;
+  minutes: number;
+  sessions: number;
+}
+
+/** Daily stats added up per calendar month, in order (for the Year chart). */
+export function byMonth(days: readonly DailyStat[]): MonthlyStat[] {
+  const months = new Map<string, MonthlyStat>();
+  for (const day of days) {
+    const month = day.date.slice(0, 7);
+    const total = months.get(month) ?? { month, pages: 0, minutes: 0, sessions: 0 };
+    total.pages += day.pages;
+    total.minutes += day.minutes;
+    total.sessions += day.sessions;
+    months.set(month, total);
+  }
+  return [...months.values()];
+}
+
 /** The local dates with at least one completed session, sorted. */
 export function readingDays(sessions: readonly SessionRecord[], timeZone: string): DateKey[] {
   const days = new Set<DateKey>();

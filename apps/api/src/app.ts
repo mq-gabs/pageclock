@@ -6,6 +6,7 @@ import { errorHandler, notFound } from './middleware/errors';
 import { booksRouter } from './routes/books';
 import { healthRouter } from './routes/health';
 import { sessionsRouter } from './routes/sessions';
+import { statsRouter } from './routes/stats';
 import { timerRouter } from './routes/timer';
 
 export interface AppDeps {
@@ -22,6 +23,7 @@ export function createApp({ db }: AppDeps) {
   app.use('/api/books', booksRouter(db));
   app.use('/api/reading-sessions', sessionsRouter(db));
   app.use('/api/timer', timerRouter(db));
+  app.use('/api/stats', statsRouter(db));
 
   app.use(notFound);
   app.use(errorHandler);

@@ -10,7 +10,10 @@ describe('streaks', () => {
   it('is zero without sessions', () => {
     expect(streaks([], { today: '2026-10-28', timeZone: TZ })).toEqual({
       current: 0,
+      currentSince: null,
       longest: 0,
+      longestFrom: null,
+      longestTo: null,
       lastReadingDay: null,
     });
   });
@@ -19,20 +22,27 @@ describe('streaks', () => {
     // Reading days: Sep 30, Oct 19, Oct 26, 27 (B at 23:30 local), 28.
     expect(streaks(sessions, { today: '2026-10-28', timeZone: TZ })).toEqual({
       current: 3,
+      currentSince: '2026-10-26',
       longest: 3,
+      longestFrom: '2026-10-26',
+      longestTo: '2026-10-28',
       lastReadingDay: '2026-10-28',
     });
   });
 
   it('keeps the streak alive until today is over', () => {
     expect(streaks(sessions, { today: '2026-10-29', timeZone: TZ }).current).toBe(3);
-    expect(streaks(sessions, { today: '2026-10-30', timeZone: TZ }).current).toBe(0);
+    const broken = streaks(sessions, { today: '2026-10-30', timeZone: TZ });
+    expect(broken).toMatchObject({ current: 0, currentSince: null, longest: 3 });
   });
 
   it('only counts days up to today', () => {
     expect(streaks(sessions, { today: '2026-10-27', timeZone: TZ })).toEqual({
       current: 2,
+      currentSince: '2026-10-26',
       longest: 2,
+      longestFrom: '2026-10-26',
+      longestTo: '2026-10-27',
       lastReadingDay: '2026-10-27',
     });
   });
@@ -53,7 +63,10 @@ describe('streaks', () => {
     );
     expect(streaks(data, { today: '2026-10-21', timeZone: TZ })).toEqual({
       current: 2,
+      currentSince: '2026-10-20',
       longest: 4,
+      longestFrom: '2026-10-01',
+      longestTo: '2026-10-04',
       lastReadingDay: '2026-10-21',
     });
   });
@@ -61,5 +74,15 @@ describe('streaks', () => {
   it('counts several sessions on one day once, across month ends', () => {
     const data = [...onDays('2026-10-30', '2026-10-31', '2026-11-01'), ...onDays('2026-10-31')];
     expect(streaks(data, { today: '2026-11-01', timeZone: TZ }).current).toBe(3);
+  });
+
+  it('reports the most recent run when two longest runs tie', () => {
+    const data = onDays('2026-10-01', '2026-10-02', '2026-10-10', '2026-10-11');
+    expect(streaks(data, { today: '2026-10-20', timeZone: TZ })).toMatchObject({
+      current: 0,
+      longest: 2,
+      longestFrom: '2026-10-10',
+      longestTo: '2026-10-11',
+    });
   });
 });
