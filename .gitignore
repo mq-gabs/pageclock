@@ -1,0 +1,11 @@
+node_modules
+dist
+.next
+out
+coverage
+.nx
+*.tsbuildinfo
+.env
+.env.local
+*.db
+*.db-journal

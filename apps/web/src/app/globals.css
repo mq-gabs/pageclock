@@ -1,0 +1,95 @@
+@import 'tailwindcss';
+
+/* Design tokens (SPEC.md › UI › Design tokens). Components use the Tailwind names, never raw hex. */
+:root {
+  --bg: #faf8f5;
+  --surface: #ffffff;
+  --border: #e7e2da;
+  --ink: #1f1b16;
+  --muted: #6f675e;
+  --accent: #2e6b57;
+  --accent-tint: #e2efe8;
+  --warning: #9a5b0f;
+  --warning-tint: #fcf1de;
+  --heat-0: #efebe5;
+  --heat-1: #cfe5da;
+  --heat-2: #8cc2a8;
+  --heat-3: #4e9a7a;
+  --heat-4: #2e6b57;
+
+  /* shadcn/ui semantic variables, mapped onto the tokens above. */
+  --background: var(--bg);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--accent);
+  --primary-foreground: var(--surface);
+  --secondary: var(--surface);
+  --secondary-foreground: var(--ink);
+  --muted-foreground: var(--muted);
+  --accent-foreground: var(--accent);
+  --destructive: #b42318;
+  --input: var(--border);
+  --ring: var(--accent);
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-tint: var(--accent-tint);
+  --color-warning: var(--warning);
+  --color-warning-tint: var(--warning-tint);
+  --color-heat-0: var(--heat-0);
+  --color-heat-1: var(--heat-1);
+  --color-heat-2: var(--heat-2);
+  --color-heat-3: var(--heat-3);
+  --color-heat-4: var(--heat-4);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Radii: 14 cards, 12 buttons/banners, 10 inputs, 6 calendar cells. */
+  --radius-card: 14px;
+  --radius-button: 12px;
+  --radius-input: 10px;
+  --radius-cell: 6px;
+
+  /* Text sizes: 32/28 page titles, 22–24 section titles, 16 body, 13 labels, 12 meta. */
+  --text-title: 32px;
+  --text-title-sm: 28px;
+  --text-section: 24px;
+  --text-section-sm: 22px;
+  --text-body: 16px;
+  --text-label: 13px;
+  --text-meta: 12px;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-bg text-ink font-sans text-body antialiased;
+  }
+}
