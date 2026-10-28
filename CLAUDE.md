@@ -35,3 +35,7 @@
 - TypeScript is pinned to 6.0 and ESLint to 9: typescript-eslint and eslint-config-next don't support TS 7 / ESLint 10 yet.
 - Database: SQLite file at `apps/api/data/reading-tracker.db` (`DATABASE_URL`, relative to `apps/api`). `db-migrate` applies `apps/api/drizzle/`; the API does not migrate on startup. `db-seed` wipes and reloads the demo library, with dates relative to today in `APP_TIMEZONE`.
 - `createApp({ db })` takes its database; API tests use `createTestDb()` (`apps/api/src/test/db.ts`), a migrated in-memory SQLite.
+- Page semantics: a session reads pages `startPage+1 … endPage`, so a session continues the previous one when `startPage === prev.endPage` (this is why the fix for a gap after page 174 is "start at page 174").
+- Minutes exclude `pausedSeconds`. Stats ignore running timers. Time-overlap warnings check sessions of every book, page checks only the same book.
+- Stats work on local date keys (`yyyy-MM-dd`); turn instants into keys with `toDateKey(instant, timeZone)` and do calendar math with the key helpers in `packages/shared/src/stats/dates.ts`.
+- Shared test data: `session()` / `draft()` in `packages/shared/src/test-utils.ts`; the hand-checked stats fixture is `packages/shared/src/stats/fixtures.ts`.

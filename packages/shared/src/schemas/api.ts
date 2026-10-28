@@ -15,10 +15,21 @@ export const apiErrorSchema = z.object({
 });
 export type ApiError = z.infer<typeof apiErrorSchema>;
 
+/** A change that resolves a warning, e.g. `{ startPage: 174 }`. Times are ISO strings. */
+export const warningSuggestionSchema = z.object({
+  startPage: z.int().optional(),
+  endPage: z.int().optional(),
+  startedAt: z.iso.datetime().optional(),
+  endedAt: z.iso.datetime().optional(),
+});
+export type WarningSuggestion = z.infer<typeof warningSuggestionSchema>;
+
 export const apiWarningSchema = z.object({
   code: z.string(),
   message: z.string(),
-  suggestion: z.record(z.string(), z.unknown()).optional(),
+  suggestion: warningSuggestionSchema.optional(),
+  /** The other session the warning is about. */
+  sessionId: z.string().optional(),
 });
 export type ApiWarning = z.infer<typeof apiWarningSchema>;
 

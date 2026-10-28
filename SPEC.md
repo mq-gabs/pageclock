@@ -235,7 +235,7 @@ Eight milestones, each ending in a working app; give Claude Code one milestone p
   - Check: `run-many -t dev` serves both apps and `/api/health` answers through the web origin; lint, typecheck and test pass.
 - [x] **2. Database.** Drizzle schema and first migration, seed script with demo books and sessions, `db-generate`, `db-migrate` and `db-seed` targets.
   - Check: a fresh database migrates and seeds, and `GET /api/books` returns the seeded books.
-- [ ] **3. Shared rules and stats.** suggestStartPage, validateSession, checkPages, summary, daily, streaks, all pure and tested.
+- [x] **3. Shared rules and stats.** suggestStartPage, validateSession, checkPages, summary, daily, streaks, all pure and tested.
   - Check: tests cover gap, overlap, no previous session, sessions near midnight in America/Fortaleza, and the Metrics formulas.
 - [ ] **4. Books.** Books API, BookCover placeholder, and the Library and Book screens (Book without sessions yet), mobile and desktop.
   - Check: add, edit, delete and filter books; screens match Figma at 390 and 1440 px.
