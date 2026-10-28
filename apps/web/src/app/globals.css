@@ -94,6 +94,15 @@
     /* Figma text uses Inter's "normal" line height, not Tailwind's 1.5. */
     line-height: normal;
   }
+  /* Tailwind's preflight gives buttons the default arrow; every clickable control gets a hand. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  summary,
+  label[for],
+  input[type='checkbox']:not(:disabled),
+  input[type='radio']:not(:disabled) {
+    cursor: pointer;
+  }
   /* Keyboard focus for anything without its own ring (links, nav items). */
   :focus-visible {
     outline: 2px solid var(--ring);

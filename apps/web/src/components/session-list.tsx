@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Session } from '@reading-tracker/shared';
 import { appTimeZone } from '@/lib/config';
-import { formatDayLabel, formatDuration, formatSpeed, formatTime } from '@/lib/format';
+import { formatDayLabel, formatSessionDuration, formatSpeed, formatTime } from '@/lib/format';
 import { EmptyState } from './states';
 
 const editHref = (s: Session) => `/books/${s.bookId}/log?session=${s.id}`;
@@ -63,13 +63,13 @@ export function SessionList({ sessions }: { sessions: Session[] }) {
                 </td>
                 <td className="px-4 py-3 text-muted">{timeRange(s)}</td>
                 <td className="px-4 py-3 text-muted">
-                  {s.metrics ? formatDuration(s.metrics.minutes) : 'Reading now'}
+                  {s.metrics ? formatSessionDuration(s.metrics.minutes) : 'Reading now'}
                 </td>
                 <td className="px-4 py-3 font-medium text-ink">
                   p. {s.startPage} → {s.endPage ?? '…'}
                 </td>
                 <td className="px-4 py-3 text-right font-medium text-accent">
-                  {s.metrics ? `+${s.metrics.pages}` : '—'}
+                  {s.metrics ? s.metrics.pages : '—'}
                 </td>
                 <td className="px-4 py-3 text-right font-medium text-accent">
                   {s.metrics ? formatSpeed(s.metrics.speed) : '—'}
@@ -104,7 +104,7 @@ function SessionRow({ session: s }: { session: Session }) {
         </p>
         <p className="text-meta text-muted">
           {timeRange(s)}
-          {s.metrics && ` · ${formatDuration(s.metrics.minutes)}`}
+          {s.metrics && ` · ${formatSessionDuration(s.metrics.minutes)}`}
         </p>
       </div>
       <div className="flex flex-col items-end gap-0.5 font-medium">
@@ -112,9 +112,7 @@ function SessionRow({ session: s }: { session: Session }) {
           p. {s.startPage} → {s.endPage ?? '…'}
         </p>
         <p className="text-meta text-accent">
-          {s.metrics
-            ? `+${s.metrics.pages} pages · ${formatSpeed(s.metrics.speed)}`
-            : 'Reading now'}
+          {s.metrics ? `${s.metrics.pages} pages · ${formatSpeed(s.metrics.speed)}` : 'Reading now'}
         </p>
       </div>
     </>

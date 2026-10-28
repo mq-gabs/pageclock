@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { ApiRequestError, ApiWarningsError } from '@/lib/api';
 import { appTimeZone } from '@/lib/config';
-import { formatDuration, formatSpeed, formatTime } from '@/lib/format';
+import { formatSessionDuration, formatSpeed, formatTime } from '@/lib/format';
 import {
   checkSession,
   useBook,
@@ -194,7 +194,7 @@ export function FinishSessionForm({
             value={pages === null ? '—' : String(pages)}
             sub={`${session.startPage} → ${parsed.success ? parsed.data.endPage : '…'}`}
           />
-          <StatCard label="Time" value={formatDuration(minutes)} sub="active" />
+          <StatCard label="Time" value={formatSessionDuration(minutes)} sub="active" />
           <StatCard label="Speed" value={formatSpeed(speed)} sub={speedSub} />
         </div>
       </div>
@@ -257,8 +257,8 @@ function DiscardPrompt({
           Discard this session?
         </DialogTitle>
         <DialogDescription className="text-[14px] text-muted">
-          {formatDuration(minutes)} of reading “{timer.book.title}” won’t be saved. It can’t be
-          undone.
+          {formatSessionDuration(minutes)} of reading “{timer.book.title}” won’t be saved. It can’t
+          be undone.
         </DialogDescription>
       </div>
       {discard.error && (

@@ -16,6 +16,17 @@ export function formatDuration(minutes: number): string {
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
+/** One session's length, to the second: 41.2 → "41m 12s", 65.5 → "1h 05m 30s", 0.75 → "45s". */
+export function formatSessionDuration(minutes: number): string {
+  const total = Math.max(0, Math.round(minutes * 60));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor(total / 60) % 60;
+  const s = String(total % 60).padStart(2, '0');
+  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${total}s`;
+}
+
 /** Pages per hour, rounded: "38 p/h"; "—" without reading time. */
 export function formatSpeed(speed: number | null): string {
   return speed === null ? '—' : `${Math.round(speed)} p/h`;

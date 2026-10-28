@@ -11,6 +11,7 @@ import {
   formatDayLabel,
   formatDuration,
   formatRelativeDay,
+  formatSessionDuration,
   formatShortDate,
   formatSpeed,
   formatTime,
@@ -113,5 +114,19 @@ describe('deltas', () => {
     expect(formatMinutesDelta(125)).toBe('+2h 05m');
     expect(formatMinutesDelta(-45)).toBe('−45 min');
     expect(formatMinutesDelta(-600)).toBe('−10h 00m');
+  });
+});
+
+describe('formatSessionDuration', () => {
+  it('shows seconds, padding the units after the first', () => {
+    expect(formatSessionDuration(41 + 12 / 60)).toBe('41m 12s');
+    expect(formatSessionDuration(30)).toBe('30m 00s');
+    expect(formatSessionDuration(65.5)).toBe('1h 05m 30s');
+    expect(formatSessionDuration(0.75)).toBe('45s');
+    expect(formatSessionDuration(0)).toBe('0s');
+  });
+
+  it('rounds to the nearest second', () => {
+    expect(formatSessionDuration(59.999)).toBe('1h 00m 00s');
   });
 });

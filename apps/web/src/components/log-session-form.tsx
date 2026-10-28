@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { DialogClose, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { ApiRequestError, ApiWarningsError } from '@/lib/api';
 import { appTimeZone } from '@/lib/config';
-import { formatDuration } from '@/lib/format';
+import { formatSessionDuration } from '@/lib/format';
 import { rangeFromForm, toLocalParts } from '@/lib/local-time';
 import {
   checkSession,
@@ -226,7 +226,7 @@ function SessionForm({
     if (!parsed.success) return null;
     const { startedAt, endedAt } = rangeFromForm(parsed.data, appTimeZone);
     const minutes = (endedAt.getTime() - startedAt.getTime()) / 60_000;
-    return `+${parsed.data.endPage - parsed.data.startPage} pages · ${formatDuration(minutes)}`;
+    return `${parsed.data.endPage - parsed.data.startPage} pages · ${formatSessionDuration(minutes)}`;
   })();
 
   return (
