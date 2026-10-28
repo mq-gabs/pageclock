@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Session } from '@reading-tracker/shared';
 import { appTimeZone } from '@/lib/config';
 import { formatDayLabel, formatDuration, formatSpeed, formatTime } from '@/lib/format';
+import { EmptyState } from './states';
 
 const editHref = (s: Session) => `/books/${s.bookId}/log?session=${s.id}`;
 const timeRange = (s: Session) =>
@@ -11,9 +12,9 @@ const timeRange = (s: Session) =>
 export function SessionList({ sessions }: { sessions: Session[] }) {
   if (sessions.length === 0) {
     return (
-      <p className="rounded-card border border-border bg-surface px-4 py-6 text-center text-[14px] text-muted">
-        No sessions yet. Log one or start the timer.
-      </p>
+      <EmptyState title="No sessions yet">
+        Log one you’ve already read, or start the timer when you pick the book up.
+      </EmptyState>
     );
   }
 

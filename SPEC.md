@@ -246,5 +246,5 @@ Eight milestones, each ending in a working app; give Claude Code one milestone p
   - Check: start, reload the page, timer still running; stop with an end page saves the session; starting a second timer returns 409.
 - [x] **7. Stats.** Stats endpoints and the Stats screen (switcher, totals, bar chart, calendar, streaks).
   - Check: numbers on screen match the seeded data computed by hand for one month.
-- [ ] **8. Polish.** Empty, loading and error states; keyboard focus and form labels; README with setup steps.
+- [x] **8. Polish.** Empty, loading and error states; keyboard focus and form labels; README with setup steps.
   - Check: a fresh clone runs with the README steps alone.

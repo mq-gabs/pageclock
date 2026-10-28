@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "nx run-many -t dev -p web api",
     "test": "nx run-many -t test",

@@ -13,22 +13,22 @@ import { useNow } from '@/lib/use-now';
 import { useStartReading } from '@/lib/use-start-reading';
 import { BookCover } from './book-cover';
 import { Field } from './field';
+import { EmptyState, ErrorState, LoadingState } from './states';
 
 /** The Read screen: the running timer, or a book picker to start one. */
 export function TimerView() {
   const { data: timer, isPending, isError, refetch } = useTimer();
 
   if (isPending) {
-    return <p className="px-5 py-16 text-center text-[14px] text-muted">Loading timer…</p>;
+    return <LoadingState label="Loading timer…" className="py-16" />;
   }
   if (isError) {
     return (
-      <div role="alert" className="flex flex-col items-center gap-3 px-5 py-16 text-center">
-        <p className="text-[14px] text-muted">Couldn’t load the timer.</p>
-        <Button variant="secondary" size="sm" onClick={() => refetch()}>
-          Try again
-        </Button>
-      </div>
+      <ErrorState
+        message="Couldn’t load the timer."
+        onRetry={() => refetch()}
+        className="px-5 py-16"
+      />
     );
   }
   return timer ? <RunningTimer key={timer.session.id} timer={timer} /> : <StartPicker />;
@@ -175,7 +175,7 @@ function StartPageField({ timer, previous }: { timer: Timer; previous: Timer['pr
 
 /** No timer running: pick a book to start one. */
 function StartPicker() {
-  const { data, isPending, isError } = useBooks({});
+  const { data, isPending, isError, refetch } = useBooks({});
   const start = useStartReading();
   const [startingId, setStartingId] = useState<string>();
 
@@ -198,19 +198,20 @@ function StartPicker() {
       )}
 
       {isPending ? (
-        <p className="py-10 text-center text-[14px] text-muted">Loading books…</p>
+        <LoadingState label="Loading books…" />
       ) : isError ? (
-        <p role="alert" className="py-10 text-center text-[14px] text-muted">
-          Couldn’t load your books.
-        </p>
+        <ErrorState message="Couldn’t load your books." onRetry={() => refetch()} />
       ) : books.length === 0 ? (
-        <p className="rounded-card border border-border bg-surface px-4 py-6 text-center text-[14px] text-muted">
-          Nothing to read yet.{' '}
-          <Link href="/library" className="font-medium text-accent hover:underline">
-            Add a book to your library
-          </Link>
-          .
-        </p>
+        <EmptyState
+          title="Nothing to read yet"
+          action={
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/library">Go to the library</Link>
+            </Button>
+          }
+        >
+          Add a book to your library, or move a finished one back to Reading.
+        </EmptyState>
       ) : (
         <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-2 lg:gap-4">
           {books.map((book) => (

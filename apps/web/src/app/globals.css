@@ -94,4 +94,9 @@
     /* Figma text uses Inter's "normal" line height, not Tailwind's 1.5. */
     line-height: normal;
   }
+  /* Keyboard focus for anything without its own ring (links, nav items). */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   addDays,
@@ -27,6 +28,7 @@ import { PagesBarChart } from './pages-bar-chart';
 import { PeriodSwitcher } from './period-switcher';
 import { ReadingCalendar } from './reading-calendar';
 import { StatCard } from './stat-card';
+import { EmptyState, ErrorState, LoadingState } from './states';
 
 /** "October 2026", "Oct 26 – Nov 1" or "2026". */
 function periodTitle(period: StatsPeriod, range: { from: string; to: string }) {
@@ -68,7 +70,11 @@ export function StatsView() {
 
   if (summary.isPending) {
     return (
-      <StatsShell period={period} onPeriod={setPeriod} body={<Notice>Loading stats…</Notice>} />
+      <StatsShell
+        period={period}
+        onPeriod={setPeriod}
+        body={<LoadingState label="Loading stats…" />}
+      />
     );
   }
   if (summary.isError || !s || !today) {
@@ -76,14 +82,7 @@ export function StatsView() {
       <StatsShell
         period={period}
         onPeriod={setPeriod}
-        body={
-          <Notice alert>
-            Couldn’t load your stats.{' '}
-            <Button variant="secondary" size="sm" onClick={() => summary.refetch()}>
-              Try again
-            </Button>
-          </Notice>
-        }
+        body={<ErrorState message="Couldn’t load your stats." onRetry={() => summary.refetch()} />}
       />
     );
   }
@@ -107,6 +106,18 @@ export function StatsView() {
       nav={nav}
       body={
         <>
+          {streaks.data?.lastReadingDay === null && (
+            <EmptyState
+              title="No reading logged yet"
+              action={
+                <Button asChild size="sm">
+                  <Link href="/read">Start reading</Link>
+                </Button>
+              }
+            >
+              Your totals, chart, calendar and streaks fill in as you log sessions or use the timer.
+            </EmptyState>
+          )}
           <Totals summary={s} vs={prev.short} isCurrent={isCurrent} />
           <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-4">
             <ChartCard
@@ -114,6 +125,7 @@ export function StatsView() {
               summary={s}
               days={chartDaily.data?.days}
               failed={chartDaily.isError}
+              onRetry={() => chartDaily.refetch()}
               desktop={desktop}
             />
             <div className="flex flex-col gap-4">
@@ -130,12 +142,18 @@ export function StatsView() {
                 {calendarDaily.data ? (
                   <ReadingCalendar days={calendarDaily.data.days} today={today} />
                 ) : (
-                  <Notice alert={calendarDaily.isError}>
-                    {calendarDaily.isError ? 'Couldn’t load the calendar.' : 'Loading…'}
-                  </Notice>
+                  <DailyState
+                    failed={calendarDaily.isError}
+                    what="the calendar"
+                    onRetry={() => calendarDaily.refetch()}
+                  />
                 )}
               </section>
-              <Streaks data={streaks.data} failed={streaks.isError} />
+              <Streaks
+                data={streaks.data}
+                failed={streaks.isError}
+                onRetry={() => streaks.refetch()}
+              />
             </div>
           </div>
         </>
@@ -256,7 +274,11 @@ function Totals({
       <StatCard
         label="Time"
         value={formatDuration(current.minutes)}
-        sub={`${formatMinutesDelta(current.minutes - previous.minutes)} vs ${vs}`}
+        sub={
+          previous.minutes === 0
+            ? `none in ${vs}`
+            : `${formatMinutesDelta(current.minutes - previous.minutes)} vs ${vs}`
+        }
       />
       <StatCard label="Avg speed" value={formatSpeed(current.speed)} sub={speedSub} />
       <StatCard
@@ -273,12 +295,14 @@ function ChartCard({
   summary: s,
   days,
   failed,
+  onRetry,
   desktop,
 }: {
   period: StatsPeriod;
   summary: StatsSummaryResponse;
   days: { date: string; pages: number; minutes: number; sessions: number }[] | undefined;
   failed: boolean;
+  onRetry: () => void;
   desktop: boolean;
 }) {
   const bars = days ? chartBars(period, days, s.today) : [];
@@ -309,7 +333,7 @@ function ChartCard({
             label={`Pages per ${unit}, ${s.current.pages} in total. ${meta}.`}
           />
         ) : (
-          <Notice alert={failed}>{failed ? 'Couldn’t load the chart.' : 'Loading…'}</Notice>
+          <DailyState failed={failed} what="the chart" onRetry={onRetry} />
         )}
       </div>
     </section>
@@ -352,13 +376,19 @@ function CalendarHeader({
 function Streaks({
   data,
   failed,
+  onRetry,
 }: {
   data: ReturnType<typeof useStreaks>['data'];
   failed: boolean;
+  onRetry: () => void;
 }) {
   const days = (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`;
   if (!data) {
-    return <Notice alert={failed}>{failed ? 'Couldn’t load streaks.' : 'Loading…'}</Notice>;
+    return failed ? (
+      <ErrorState message="Couldn’t load streaks." onRetry={onRetry} className="py-6" />
+    ) : (
+      <LoadingState className="py-6" />
+    );
   }
   return (
     <section aria-label="Streaks" className="grid grid-cols-2 gap-2.5 lg:gap-3">
@@ -384,13 +414,18 @@ function Streaks({
   );
 }
 
-function Notice({ children, alert }: { children: React.ReactNode; alert?: boolean }) {
-  return (
-    <div
-      role={alert ? 'alert' : undefined}
-      className="flex items-center justify-center gap-3 py-10 text-center text-[14px] text-muted"
-    >
-      {children}
-    </div>
+function DailyState({
+  failed,
+  what,
+  onRetry,
+}: {
+  failed: boolean;
+  what: string;
+  onRetry: () => void;
+}) {
+  return failed ? (
+    <ErrorState message={`Couldn’t load ${what}.`} onRetry={onRetry} />
+  ) : (
+    <LoadingState />
   );
 }

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { SaveSessionResponse } from '@reading-tracker/shared';
 import { FinishSessionForm } from '@/components/finish-session-form';
 import { FinishPrompt } from '@/components/log-session-form';
+import { LoadingState } from '@/components/states';
 import { TimerView } from '@/components/timer-view';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useTimer } from '@/lib/queries';
@@ -33,7 +34,7 @@ export default function FinishSessionPage() {
     content = (
       <>
         <DialogTitle className="sr-only">Finish session</DialogTitle>
-        <p className="py-10 text-center text-[14px] text-muted">Loading…</p>
+        <LoadingState />
       </>
     );
   } else if (!timer.data) {

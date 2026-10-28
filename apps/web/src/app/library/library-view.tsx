@@ -7,6 +7,7 @@ import { BookFormDialog } from '@/components/book-form-dialog';
 import { BookRow } from '@/components/book-row';
 import { Chip } from '@/components/chip';
 import { SearchInput } from '@/components/search-input';
+import { EmptyState, ErrorState, LoadingState } from '@/components/states';
 import { Button } from '@/components/ui/button';
 import { useBooks } from '@/lib/queries';
 import { cn } from '@/lib/utils';
@@ -106,18 +107,37 @@ export function LibraryView() {
       </div>
 
       {isPending ? (
-        <p className="py-10 text-center text-[14px] text-muted">Loading books…</p>
+        <LoadingState label="Loading books…" />
       ) : isError ? (
-        <div role="alert" className="flex flex-col items-center gap-3 py-10 text-center">
-          <p className="text-[14px] text-muted">Couldn’t load your library.</p>
-          <Button variant="secondary" size="sm" onClick={() => refetch()}>
-            Try again
-          </Button>
-        </div>
+        <ErrorState message="Couldn’t load your library." onRetry={() => refetch()} />
       ) : books.length === 0 ? (
-        <p className="py-10 text-center text-[14px] text-muted">
-          {counts?.all === 0 && !q ? 'No books yet. Add the first one.' : 'No books match.'}
-        </p>
+        counts?.all === 0 && !q ? (
+          <EmptyState
+            title="Your library is empty"
+            action={<Button onClick={() => setAdding(true)}>+ Add your first book</Button>}
+          >
+            Add a book you’re reading or want to read, then log sessions or start the timer.
+          </EmptyState>
+        ) : (
+          <EmptyState
+            title="No books match"
+            action={
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setSearch('');
+                  setParams({ status: undefined, q: '' });
+                }}
+              >
+                Clear search and filters
+              </Button>
+            }
+          >
+            {q ? `Nothing matches “${q}”` : 'Nothing here'}
+            {status ? ` in ${filters.find((f) => f.value === status)?.label}.` : '.'}
+          </EmptyState>
+        )
       ) : (
         <ul className="flex flex-col gap-2.5 lg:grid lg:grid-cols-3 lg:gap-4">
           {books.map((book) => (

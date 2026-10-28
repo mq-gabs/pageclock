@@ -94,8 +94,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   return (
     <div className="min-h-screen lg:flex">
+      <a
+        href="#content"
+        className="sr-only z-50 rounded-button border border-border bg-surface font-semibold text-accent shadow-sm focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:px-4 focus:py-2"
+      >
+        Skip to content
+      </a>
       <Sidebar path={path} />
-      <div className="min-w-0 flex-1 pb-16 lg:pb-0">{children}</div>
+      <div id="content" tabIndex={-1} className="min-w-0 flex-1 pb-16 outline-none lg:pb-0">
+        {children}
+      </div>
       <BottomNav path={path} />
     </div>
   );

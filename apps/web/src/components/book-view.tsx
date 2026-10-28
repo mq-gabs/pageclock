@@ -15,6 +15,7 @@ import { StatusChip } from './chip';
 import { ProgressBar } from './progress-bar';
 import { SessionList } from './session-list';
 import { StatCard } from './stat-card';
+import { ErrorState, LoadingState } from './states';
 
 /** The Book screen. Also rendered behind the Log session dialog on desktop. */
 export function BookView({ id }: { id: string }) {
@@ -37,7 +38,7 @@ export function BookView({ id }: { id: string }) {
     return (
       <main className="flex flex-col gap-4 px-5 pt-6 lg:px-12 lg:py-10">
         {back}
-        <p className="py-10 text-center text-[14px] text-muted">Loading book…</p>
+        <LoadingState label="Loading book…" />
       </main>
     );
   }
@@ -48,16 +49,12 @@ export function BookView({ id }: { id: string }) {
     return (
       <main className="flex flex-col gap-4 px-5 pt-6 lg:px-12 lg:py-10">
         {back}
-        <div role="alert" className="flex flex-col items-center gap-3 py-10 text-center">
-          <p className="text-[14px] text-muted">
-            {notFound ? 'This book doesn’t exist or was deleted.' : 'Couldn’t load this book.'}
-          </p>
-          {!notFound && (
-            <Button variant="secondary" size="sm" onClick={() => refetch()}>
-              Try again
-            </Button>
-          )}
-        </div>
+        <ErrorState
+          message={
+            notFound ? 'This book doesn’t exist or was deleted.' : 'Couldn’t load this book.'
+          }
+          onRetry={notFound ? undefined : () => refetch()}
+        />
       </main>
     );
   }
@@ -74,6 +71,7 @@ export function BookView({ id }: { id: string }) {
         <button
           type="button"
           onClick={() => setEditing(true)}
+          aria-label="Edit book"
           className="rounded-button text-[15px] font-medium text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           Edit
@@ -156,11 +154,13 @@ export function BookView({ id }: { id: string }) {
           Sessions
         </h2>
         {sessions.isPending ? (
-          <p className="text-[14px] text-muted">Loading sessions…</p>
+          <LoadingState label="Loading sessions…" className="py-6" />
         ) : sessions.isError ? (
-          <p role="alert" className="text-[14px] text-muted">
-            Couldn’t load sessions.
-          </p>
+          <ErrorState
+            message="Couldn’t load sessions."
+            onRetry={() => sessions.refetch()}
+            className="py-6"
+          />
         ) : (
           <SessionList sessions={sessions.data.sessions} />
         )}

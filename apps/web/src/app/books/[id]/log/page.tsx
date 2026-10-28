@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { BookView } from '@/components/book-view';
 import { LogSessionForm } from '@/components/log-session-form';
+import { LoadingState } from '@/components/states';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useBook, useBookSessions } from '@/lib/queries';
 
@@ -39,7 +40,7 @@ function LogSessionRoute() {
           {loading ? (
             <>
               <DialogTitle className="sr-only">Log session</DialogTitle>
-              <p className="py-10 text-center text-[14px] text-muted">Loading…</p>
+              <LoadingState />
             </>
           ) : missing || !book.data ? (
             <>

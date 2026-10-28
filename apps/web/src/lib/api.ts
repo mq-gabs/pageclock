@@ -27,11 +27,21 @@ export class ApiWarningsError extends Error {
 type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 
 async function send(method: Method, path: string, body?: unknown): Promise<Response> {
-  const res = await fetch(path, {
-    method,
-    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      method,
+      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    // fetch only rejects when no response arrives (offline, API down, CORS).
+    throw new ApiRequestError(
+      0,
+      'network_error',
+      'Can’t reach the server. Check your connection and try again.',
+    );
+  }
   if (res.ok) return res;
 
   const json: unknown = await res.json().catch(() => null);
@@ -44,7 +54,12 @@ async function send(method: Method, path: string, body?: unknown): Promise<Respo
     const { code, message, fields } = parsed.data.error;
     throw new ApiRequestError(res.status, code, message, fields);
   }
-  throw new ApiRequestError(res.status, 'http_error', `Request failed (${res.status})`);
+  // No API error body: usually the Next proxy answering because the API is down.
+  const message =
+    res.status >= 500
+      ? 'The server ran into a problem. Try again in a moment.'
+      : `Request failed (${res.status})`;
+  throw new ApiRequestError(res.status, 'http_error', message);
 }
 
 /** Calls the API and validates the JSON response with `schema`. */
