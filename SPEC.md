@@ -1,4 +1,4 @@
-# Reading Tracker — MVP Spec
+# Pageclock — MVP Spec
 
 Oct 28, 2026 · @gabs
 

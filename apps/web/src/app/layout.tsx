@@ -7,7 +7,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: { default: 'Reading Tracker', template: '%s · Reading Tracker' },
+  title: { default: 'Pageclock', template: '%s · Pageclock' },
   description: 'Track books, reading sessions and reading speed.',
 };
 

@@ -1,4 +1,9 @@
-# Reading Tracker
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/wordmark/svg/pageclock-wordmark-on-dark.svg" />
+    <img src="assets/brand/wordmark/svg/pageclock-wordmark-color.svg" alt="Pageclock" height="48" />
+  </picture>
+</h1>
 
 Track the books you read, log reading sessions with a timer or by hand, and see your pages, reading time, speed, reading days and streaks.
 
@@ -81,6 +86,7 @@ Everything has a working default. To change a setting, set an environment variab
 apps/web         Next.js App Router UI (Tailwind, shadcn/ui, TanStack Query, Recharts)
 apps/api         Express API, Drizzle ORM on SQLite (better-sqlite3), migrations in apps/api/drizzle
 packages/shared  Zod schemas, business rules and stats math, shared by web and API
+assets/brand     Pageclock logo files (symbol, wordmark, app icons, favicons); see its README
 ```
 
 All dependencies live in the root `package.json`. Each project's Nx targets are in its `project.json`.

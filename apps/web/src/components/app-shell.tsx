@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { NowReadingCard } from './now-reading-card';
 import { AppLink } from './app-link';
 import { NavigationProgress } from './navigation-progress';
+import { PageclockWordmark } from './logo';
 
 interface NavItem {
   href: string;
@@ -29,11 +30,8 @@ const navItems: NavItem[] = [
 function Sidebar({ path }: { path: string }) {
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col gap-7 border-r border-border bg-surface px-4 pt-7 pb-6 lg:flex">
-      <AppLink href="/library" className="flex items-center gap-2.5 pl-2">
-        <span className="flex size-[30px] items-center justify-center rounded-[8px] bg-accent">
-          <BookOpen aria-hidden size={16} className="text-surface" />
-        </span>
-        <span className="text-[15px] font-bold text-ink">Reading Tracker</span>
+      <AppLink href="/library" aria-label="Pageclock, go to Library" className="flex pl-2">
+        <PageclockWordmark className="h-7" />
       </AppLink>
       <nav aria-label="Main" className="flex flex-col gap-1">
         {navItems.map(({ href, label, icon: Icon, matches }) => {

@@ -1,4 +1,4 @@
-# Reading Tracker
+# Pageclock
 
 `SPEC.md` is the source of truth. Build in the order of its Build plan.
 
@@ -44,6 +44,7 @@ Every project target also has a root script named `<project>:<target>` (`pnpm we
 - Shared test data: `session()` / `draft()` in `packages/shared/src/test-utils.ts`; the hand-checked stats fixture is `packages/shared/src/stats/fixtures.ts`.
 - Web data: `apps/web/src/lib/api.ts` (fetch + response validation with shared schemas, throws `ApiRequestError` with `fields`) and `lib/queries.ts` (TanStack Query hooks, keys under `['books', …]`). Forms map `error.fields` back onto inputs with `setError`.
 - Figma uses Inter's `normal` line height (set on `body`); sizes outside the token scale (15, 14, 17, 11 px) use arbitrary `text-[15px]` classes. `cn()` knows the custom `text-*` size tokens, so `cn('text-label', 'text-muted')` keeps both.
+- Logo: `components/logo.tsx` (`PageclockWordmark`, `PageclockSymbol`) draws the brand mark with token colors; the tab and home-screen icons are `favicon.ico`, `icon.svg` and `apple-icon.png` in `apps/web/src/app/`. Source files and the brand guide are in `assets/brand/`.
 - Icons are lucide-react (same glyphs as the Figma SVGs) so they take token colors via `currentColor`.
 - Dialogs (`components/ui/dialog.tsx`) are full screen below `lg` and a centered 480 px card from `lg`.
 - Saving a session (create, edit, and the timer stop in milestone 6) goes through `saveSession()` in `apps/api/src/services/sessions.ts`: one transaction that runs rules 2–4, throws `HttpError` 400 or `WarningsError` (→ 409 `{ warnings }`), writes, then applies rule 6 and bumps the book's `updatedAt`. It returns `{ session, book, offerFinish }`.
@@ -57,7 +58,7 @@ Every project target also has a root script named `<project>:<target>` (`pnpm we
 - The Stats screen (`components/stats-view.tsx`) has Week/Month/Year only (Figma's "Custom" is post-MVP). The Year chart is pages per month (`byMonth`); the calendar shows the month of the last day shown. Chart bars and axis ticks come from `lib/stats-chart.ts`.
 - `apps/api/src/routes/stats.test.ts` holds the hand-computed seed numbers for October 2026 (now = Oct 28, 12:00 Fortaleza).
 - Loading UI is skeletons (`components/skeletons.tsx`), used both in each route's `loading.tsx` and while a screen's queries are pending; error and empty UI use `ErrorState` (with "Try again") and `EmptyState` from `components/states.tsx`. `lib/api.ts` turns a failed `fetch` into `ApiRequestError` `network_error` and a body-less 5xx into a friendly message, so `error.message` is always safe to show.
-- Page titles come from `metadata` (`'%s · Reading Tracker'` template); client-only routes get them from a small server `layout.tsx`. `books/[id]/layout.tsx` must stay static (no API calls): Next prefetches it down to `loading.tsx` before a click. `BookView` sets the book's title on `document.title`.
+- Page titles come from `metadata` (`'%s · Pageclock'` template); client-only routes get them from a small server `layout.tsx`. `books/[id]/layout.tsx` must stay static (no API calls): Next prefetches it down to `loading.tsx` before a click. `BookView` sets the book's title on `document.title`.
 - Next.js 16: `error.tsx` receives `{ error: unknown, retry }` (not `reset`). Check `node_modules/next/dist/docs/` before using a Next API from memory.
 - Keyboard: `globals.css` gives every element a `:focus-visible` outline unless it sets its own ring; `AppShell` has a "Skip to content" link to `#content`.
 - Navigation feedback: use `AppLink` (`components/app-link.tsx`) instead of `next/link`, and `useAppRouter()` (`lib/navigation-progress.ts`) instead of `useRouter().push/replace`; both drive the top `NavigationProgress` bar while a route loads. Query-string-only changes (Library filters) use `history.replaceState`, which needs no server round trip.

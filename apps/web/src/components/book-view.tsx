@@ -55,7 +55,7 @@ function BookScreen({ id, onLog }: { id: string; onLog: (sessionId?: string) => 
   const start = useStartReading();
   const title = data?.book.title;
   useEffect(() => {
-    if (title) document.title = `${title} · Reading Tracker`;
+    if (title) document.title = `${title} · Pageclock`;
   }, [title]);
 
   const back = (
