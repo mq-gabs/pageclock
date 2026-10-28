@@ -15,21 +15,24 @@
 
 ## Commands
 
-| Task               | Command                                                         |
-| ------------------ | --------------------------------------------------------------- |
-| Install            | `pnpm install`                                                  |
-| Run both apps      | `pnpm nx run-many -t dev -p web api`                            |
-| Test everything    | `pnpm nx run-many -t test`                                      |
-| Lint and typecheck | `pnpm nx run-many -t lint typecheck`                            |
-| Only what changed  | `pnpm nx affected -t lint test typecheck`                       |
-| New migration      | `pnpm nx run api:db-generate` then `pnpm nx run api:db-migrate` |
-| Seed demo data     | `pnpm nx run api:db-seed`                                       |
+| Task               | Command                                           |
+| ------------------ | ------------------------------------------------- |
+| Install            | `pnpm install`                                    |
+| Run both apps      | `pnpm dev`                                        |
+| Test everything    | `pnpm test`                                       |
+| Lint and typecheck | `pnpm lint`                                       |
+| Only what changed  | `pnpm affected`                                   |
+| New migration      | `pnpm api:db-generate` then `pnpm api:db-migrate` |
+| Seed demo data     | `pnpm api:db-seed`                                |
+
+Every project target also has a root script named `<project>:<target>` (`pnpm web:typecheck`, `pnpm api:test src/routes`); it runs `nx run <project>:<target>`, and extra arguments reach the underlying command. When adding a target to a `project.json`, add its root script too.
 
 ## Workspace notes
 
-- Nx targets come from each project's `package.json` scripts; project names and tags live in its `nx` field (`web`, `api`, `shared`).
+- One `package.json` at the root holds every dependency; add packages there (`pnpm add <pkg>` at the root). Apps and packages have no `package.json`.
+- Each project's Nx name, tags and targets live in its `project.json` (`web`, `api`, `shared`); targets are commands run with `cwd` set to the project folder.
 - Module boundaries (`eslint.config.mjs`): `web` and `api` may import only `@reading-tracker/shared`; `shared` imports no project.
-- `@reading-tracker/shared` ships TypeScript source (no build step): Next transpiles it (`transpilePackages`), `tsx` runs it in API dev, and `tsup` bundles it into the API build.
+- `@reading-tracker/shared` is a TypeScript path alias to `packages/shared/src/index.ts` (in `tsconfig.base.json`, repeated in `apps/web/tsconfig.json` because it sets its own `paths`). No build step: Next, `tsx` and Vitest (`resolve.tsconfigPaths`) follow the alias, and `tsup` bundles it into the API build while keeping the root `dependencies` external.
 - Ports: web 3000, api 3333. Next rewrites `/api/*` to `API_URL` (default `http://localhost:3333`).
 - Design tokens are CSS variables in `apps/web/src/app/globals.css`, exposed as Tailwind colors (`bg-surface`, `text-muted`, `bg-heat-2`, …), radii (`rounded-card|button|input|cell`) and text sizes (`text-title|section|body|label|meta`). shadcn/ui variables are mapped onto them.
 - TypeScript is pinned to 6.0 and ESLint to 9: typescript-eslint and eslint-config-next don't support TS 7 / ESLint 10 yet.
@@ -55,6 +58,6 @@
 - `apps/api/src/routes/stats.test.ts` holds the hand-computed seed numbers for October 2026 (now = Oct 28, 12:00 Fortaleza).
 - Loading UI is skeletons (`components/skeletons.tsx`), used both in each route's `loading.tsx` and while a screen's queries are pending; error and empty UI use `ErrorState` (with "Try again") and `EmptyState` from `components/states.tsx`. `lib/api.ts` turns a failed `fetch` into `ApiRequestError` `network_error` and a body-less 5xx into a friendly message, so `error.message` is always safe to show.
 - Page titles come from `metadata` (`'%s · Reading Tracker'` template); client-only routes get them from a small server `layout.tsx`. `books/[id]/layout.tsx` must stay static (no API calls): Next prefetches it down to `loading.tsx` before a click. `BookView` sets the book's title on `document.title`.
-- Next.js 16: `error.tsx` receives `{ error: unknown, retry }` (not `reset`). Check `apps/web/node_modules/next/dist/docs/` before using a Next API from memory.
+- Next.js 16: `error.tsx` receives `{ error: unknown, retry }` (not `reset`). Check `node_modules/next/dist/docs/` before using a Next API from memory.
 - Keyboard: `globals.css` gives every element a `:focus-visible` outline unless it sets its own ring; `AppShell` has a "Skip to content" link to `#content`.
 - Navigation feedback: use `AppLink` (`components/app-link.tsx`) instead of `next/link`, and `useAppRouter()` (`lib/navigation-progress.ts`) instead of `useRouter().push/replace`; both drive the top `NavigationProgress` bar while a route loads. Query-string-only changes (Library filters) use `history.replaceState`, which needs no server round trip.

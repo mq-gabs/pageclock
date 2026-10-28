@@ -7,8 +7,15 @@
     "noEmit": true,
     "incremental": true,
     "verbatimModuleSyntax": false,
-    "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["./src/*"] }
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@reading-tracker/shared": ["../../packages/shared/src/index.ts"]
+    }
   },
   "include": [
     "next-env.d.ts",

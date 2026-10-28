@@ -1,0 +1,45 @@
+{
+  "name": "web",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/web/src",
+  "projectType": "application",
+  "tags": ["scope:web"],
+  "targets": {
+    "dev": {
+      "command": "next dev --port 3000",
+      "options": {
+        "cwd": "apps/web"
+      }
+    },
+    "build": {
+      "command": "next build",
+      "options": {
+        "cwd": "apps/web"
+      }
+    },
+    "start": {
+      "command": "next start --port 3000",
+      "options": {
+        "cwd": "apps/web"
+      }
+    },
+    "lint": {
+      "command": "eslint .",
+      "options": {
+        "cwd": "apps/web"
+      }
+    },
+    "typecheck": {
+      "command": "next typegen && tsc --noEmit -p tsconfig.json",
+      "options": {
+        "cwd": "apps/web"
+      }
+    },
+    "test": {
+      "command": "vitest run",
+      "options": {
+        "cwd": "apps/web"
+      }
+    }
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "name": "api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/api/src",
+  "projectType": "application",
+  "tags": ["scope:api"],
+  "targets": {
+    "dev": {
+      "command": "tsx watch --clear-screen=false src/main.ts",
+      "options": {
+        "cwd": "apps/api"
+      }
+    },
+    "build": {
+      "command": "tsup",
+      "options": {
+        "cwd": "apps/api"
+      }
+    },
+    "start": {
+      "command": "node dist/main.js",
+      "options": {
+        "cwd": "apps/api"
+      }
+    },
+    "lint": {
+      "command": "eslint .",
+      "options": {
+        "cwd": "apps/api"
+      }
+    },
+    "typecheck": {
+      "command": "tsc --noEmit -p tsconfig.json",
+      "options": {
+        "cwd": "apps/api"
+      }
+    },
+    "test": {
+      "command": "vitest run",
+      "options": {
+        "cwd": "apps/api"
+      }
+    },
+    "db-generate": {
+      "command": "drizzle-kit generate",
+      "options": {
+        "cwd": "apps/api"
+      }
+    },
+    "db-migrate": {
+      "command": "tsx src/db/migrate.ts",
+      "options": {
+        "cwd": "apps/api"
+      }
+    },
+    "db-seed": {
+      "command": "tsx src/db/seed.ts",
+      "options": {
+        "cwd": "apps/api"
+      }
+    }
+  }
+}

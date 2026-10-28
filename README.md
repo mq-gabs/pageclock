@@ -2,7 +2,7 @@
 
 Track the books you read, log reading sessions with a timer or by hand, and see your pages, reading time, speed, reading days and streaks.
 
-It's a single-user app that runs on your machine: a Next.js web app, an Express API and a SQLite file, in an Nx + pnpm monorepo. [SPEC.md](SPEC.md) describes the product and its rules.
+It's a single-user app that runs on your machine: a Next.js web app, an Express API and a SQLite file, in an Nx monorepo with a single root `package.json` (pnpm). [SPEC.md](SPEC.md) describes the product and its rules.
 
 ## Requirements
 
@@ -25,8 +25,8 @@ No database server is needed: SQLite stores everything in a file inside the repo
 git clone <repository-url> reading-tracker
 cd reading-tracker
 pnpm install
-pnpm nx run api:db-migrate   # creates apps/api/data/reading-tracker.db
-pnpm nx run api:db-seed      # optional: five demo books with sessions from the last 40 days
+pnpm api:db-migrate   # creates apps/api/data/reading-tracker.db
+pnpm api:db-seed      # optional: five demo books with sessions from the last 40 days
 pnpm dev
 ```
 
@@ -38,24 +38,26 @@ Stop both apps with `Ctrl+C`.
 
 ## Everyday commands
 
-| Task                                                         | Command                                          |
-| ------------------------------------------------------------ | ------------------------------------------------ |
-| Run web and API in watch mode                                | `pnpm dev`                                       |
-| Run all tests                                                | `pnpm test`                                      |
-| Lint and typecheck                                           | `pnpm lint`                                      |
-| Only what changed since `main`                               | `pnpm nx affected -t lint test typecheck`        |
-| Format                                                       | `pnpm format`                                    |
-| Apply database migrations                                    | `pnpm nx run api:db-migrate`                     |
-| Create a migration after editing `apps/api/src/db/schema.ts` | `pnpm nx run api:db-generate`, then `db-migrate` |
-| Reset to the demo data                                       | `pnpm nx run api:db-seed`                        |
+| Task                                                         | Command                                            |
+| ------------------------------------------------------------ | -------------------------------------------------- |
+| Run web and API in watch mode                                | `pnpm dev`                                         |
+| Run all tests                                                | `pnpm test`                                        |
+| Lint and typecheck                                           | `pnpm lint`                                        |
+| Only what changed since `main`                               | `pnpm affected`                                    |
+| Format                                                       | `pnpm format`                                      |
+| Apply database migrations                                    | `pnpm api:db-migrate`                              |
+| Create a migration after editing `apps/api/src/db/schema.ts` | `pnpm api:db-generate`, then `pnpm api:db-migrate` |
+| Reset to the demo data                                       | `pnpm api:db-seed`                                 |
+
+Each project command also has its own script, named `<project>:<target>`: for example `pnpm web:dev`, `pnpm api:test`, `pnpm shared:typecheck`. Extra arguments go to the underlying tool (`pnpm api:test src/routes/books.test.ts`). The full list is in the root [package.json](package.json).
 
 Nx caches lint, typecheck and test results; add `--skip-nx-cache` to force a rerun.
 
 ## Production build
 
 ```sh
-pnpm nx run-many -t build -p web api
-pnpm nx run-many -t start -p web api
+pnpm build
+pnpm start
 ```
 
 Run `db-migrate` against the same database first. The API never migrates on startup.
@@ -81,11 +83,13 @@ apps/api         Express API, Drizzle ORM on SQLite (better-sqlite3), migrations
 packages/shared  Zod schemas, business rules and stats math, shared by web and API
 ```
 
+All dependencies live in the root `package.json`. Each project's Nx targets are in its `project.json`.
+
 Business rules and stats calculations live only in `packages/shared` as pure, tested functions. [CLAUDE.md](CLAUDE.md) has the conventions and implementation notes for contributors.
 
 ## Troubleshooting
 
-- **`no such table: books`**: the database hasn't been migrated. Run `pnpm nx run api:db-migrate`.
+- **`no such table: books`**: the database hasn't been migrated. Run `pnpm api:db-migrate`.
 - **`better-sqlite3` fails to load** after switching Node versions: run `pnpm rebuild better-sqlite3`. Its native build is allowed in `pnpm-workspace.yaml` (`allowBuilds`).
 - **Port 3000 or 3333 already in use**: stop the other process. To move the API, set `PORT`, and set `API_URL` to match.
 - **The web app shows "Can’t reach the server"**: the API isn't running or crashed. Check the `api:` lines in the `pnpm dev` output.
