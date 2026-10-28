@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { BookWithProgress } from '@reading-tracker/shared';
 import {
   formatBookMeta,
+  formatClock,
   formatDayLabel,
   formatDuration,
   formatRelativeDay,
@@ -69,5 +70,13 @@ describe('formatBookMeta', () => {
     expect(
       formatBookMeta({ ...book, status: 'finished', finishedAt: '2026-10-12T20:00:00Z' }, TZ),
     ).toBe('Finished · Oct 12');
+  });
+});
+
+describe('formatClock', () => {
+  it('pads hours, minutes and seconds', () => {
+    expect(formatClock(0)).toBe('00:00:00');
+    expect(formatClock(41 * 60 + 12)).toBe('00:41:12');
+    expect(formatClock(12 * 3600 + 5.9)).toBe('12:00:05');
   });
 });

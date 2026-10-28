@@ -9,12 +9,17 @@ import {
   saveSessionResponseSchema,
   sessionCheckResponseSchema,
   suggestedStartPageResponseSchema,
+  timerResponseSchema,
   type CheckSessionBody,
   type CreateBookInput,
   type CreateSessionInput,
   type ListBooksQuery,
+  type StartTimerInput,
+  type StopTimerInput,
+  type TimerResponse,
   type UpdateBookInput,
   type UpdateSessionInput,
+  type UpdateTimerInput,
 } from '@reading-tracker/shared';
 import { api, apiNoContent } from './api';
 
@@ -115,5 +120,67 @@ export function useDeleteSession() {
   return useMutation({
     mutationFn: (sessionId: string) => apiNoContent('DELETE', `/api/reading-sessions/${sessionId}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: bookKeys.all }),
+  });
+}
+
+export const timerKey = ['timer'] as const;
+
+/** Rule 5: the running timer comes from the API, so it survives reloads and device switches. */
+export function useTimer() {
+  return useQuery({
+    queryKey: timerKey,
+    queryFn: () => api('GET', '/api/timer', timerResponseSchema),
+    select: (data) => data.timer,
+  });
+}
+
+/** Mutations that answer `{ timer }` put it straight into the cache. */
+function useTimerMutation<V>(mutationFn: (variables: V) => Promise<TimerResponse>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: (data) => queryClient.setQueryData(timerKey, data),
+    // A 404/409 means the cached timer is stale (stopped or started on another device).
+    onError: () => queryClient.invalidateQueries({ queryKey: timerKey }),
+  });
+}
+
+export const useStartTimer = () =>
+  useTimerMutation((input: StartTimerInput) =>
+    api('POST', '/api/timer/start', timerResponseSchema, input),
+  );
+
+export const useUpdateTimer = () =>
+  useTimerMutation((input: UpdateTimerInput) =>
+    api('PATCH', '/api/timer', timerResponseSchema, input),
+  );
+
+export const usePauseTimer = () =>
+  useTimerMutation((action: 'pause' | 'resume') =>
+    api('POST', `/api/timer/${action}`, timerResponseSchema),
+  );
+
+/** Stop with an end page. Throws `ApiWarningsError` on 409 until `confirmWarnings` is set. */
+export function useStopTimer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: StopTimerInput) =>
+      api('POST', '/api/timer/stop', saveSessionResponseSchema, input),
+    onSuccess: async () => {
+      queryClient.setQueryData<TimerResponse>(timerKey, { timer: null });
+      await queryClient.invalidateQueries({ queryKey: bookKeys.all });
+    },
+  });
+}
+
+/** Throw the running session away. */
+export function useDiscardTimer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => apiNoContent('DELETE', `/api/reading-sessions/${sessionId}`),
+    onSuccess: async () => {
+      queryClient.setQueryData<TimerResponse>(timerKey, { timer: null });
+      await queryClient.invalidateQueries({ queryKey: bookKeys.all });
+    },
   });
 }

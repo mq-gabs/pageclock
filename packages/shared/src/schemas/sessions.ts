@@ -12,6 +12,7 @@ export const sessionErrorCodes = [
   'start_page_negative',
   'end_page_not_after_start',
   'end_page_above_total',
+  'start_page_not_below_total',
 ] as const;
 export type SessionErrorCode = (typeof sessionErrorCodes)[number];
 

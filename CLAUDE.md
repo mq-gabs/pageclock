@@ -47,3 +47,6 @@
 - On the web, a 409 becomes `ApiWarningsError` (`lib/api.ts`); the Log session form shows it in `PageCheckBanner` and "Save anyway" resends with `confirmWarnings: true`.
 - Form dates and times are in `appTimeZone`, converted with `lib/local-time.ts`; an end time at or before the start time means the session ends the next day.
 - `/books/[id]/log` (`?session=<id>` to edit) renders `BookView` behind a `Dialog`: full screen on mobile, 560 px on desktop.
+- Timer (rule 5): `apps/api/src/services/timer.ts`; pure helpers (`timerElapsedSeconds`, `timerEndedAt`, `pausedSecondsAfterResume`) in `packages/shared/src/rules/timer.ts`. `GET /api/timer` and the start/pause/resume/`PATCH` routes answer `{ timer: { session, book, previous } | null }`; stop answers like a save (`saveSession()`).
+- Stop pauses the timer before opening `/read/finish`, and a paused timer ends at `pausedAt`, so time spent on the Finish screen doesn't count. Discard deletes the running session.
+- Web timer state lives under the `['timer']` query key (`useTimer()`); start/pause/update mutations write the response into that cache. Use `mutateAsync` when a mutation clears the timer, because the calling component unmounts before `mutate()` callbacks run.

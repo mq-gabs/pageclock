@@ -54,3 +54,10 @@ export function formatDayLabel(iso: string, timeZone: string): string {
 export function formatTime(iso: string, timeZone: string): string {
   return format(new TZDate(new Date(iso).getTime(), timeZone), 'HH:mm');
 }
+
+/** A timer's elapsed seconds: 2472 → "00:41:12". */
+export function formatClock(seconds: number): string {
+  const total = Math.max(0, Math.floor(seconds));
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(Math.floor(total / 3600))}:${pad(Math.floor(total / 60) % 60)}:${pad(total % 60)}`;
+}

@@ -324,7 +324,7 @@ function SessionForm({
 }
 
 /** Rule 6: offered when a saved session reaches the book's last page. */
-function FinishPrompt({ book, onClose }: { book: BookWithProgress; onClose: () => void }) {
+export function FinishPrompt({ book, onClose }: { book: BookWithProgress; onClose: () => void }) {
   const update = useUpdateBook(book.id);
   return (
     <div className="flex flex-1 flex-col gap-5">

@@ -22,7 +22,7 @@ import { books, readingSessions, type ReadingSessionRow } from '../db/schema';
 import { HttpError, WarningsError } from '../middleware/errors';
 import { findBookRow, getBookWithProgress } from './books';
 
-const toRecord = (row: ReadingSessionRow): SessionRecord => ({
+export const toRecord = (row: ReadingSessionRow): SessionRecord => ({
   id: row.id,
   bookId: row.bookId,
   startedAt: row.startedAt,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { session } from '../test-utils';
-import { suggestStartPage } from './suggest-start-page';
+import { latestSessionBefore, suggestStartPage } from './suggest-start-page';
 
 const at = new Date('2026-10-20T12:00:00Z');
 
@@ -43,5 +43,19 @@ describe('suggestStartPage', () => {
       session({ start: '2026-10-20T11:00:00Z', end: null, startPage: 40, endPage: null }),
     ];
     expect(suggestStartPage(sessions, at)).toBe(40);
+  });
+});
+
+describe('latestSessionBefore', () => {
+  it('returns the session rule 1 takes the start page from', () => {
+    const latest = session({ start: '2026-10-19T20:00:00Z', startPage: 120, endPage: 174 });
+    const sessions = [session({ start: '2026-10-18T20:00:00Z', endPage: 120 }), latest];
+    expect(latestSessionBefore(sessions, at)).toBe(latest);
+  });
+
+  it('is undefined without an earlier finished session', () => {
+    expect(latestSessionBefore([], at)).toBeUndefined();
+    const running = session({ start: '2026-10-20T11:00:00Z', end: null, endPage: null });
+    expect(latestSessionBefore([running], at)).toBeUndefined();
   });
 });

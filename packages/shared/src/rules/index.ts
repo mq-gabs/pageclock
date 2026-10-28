@@ -4,3 +4,4 @@ export * from './progress';
 export * from './suggest-start-page';
 export * from './types';
 export * from './validate-session';
+export * from './timer';

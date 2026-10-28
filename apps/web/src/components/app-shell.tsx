@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpen, ChartColumn, Timer, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { NowReadingCard } from './now-reading-card';
 
 interface NavItem {
   href: string;
@@ -23,7 +24,7 @@ const navItems: NavItem[] = [
   { href: '/stats', label: 'Stats', icon: ChartColumn, matches: (p) => p.startsWith('/stats') },
 ];
 
-/** Figma "Sidebar" (from 1024 px). The "Now reading" card arrives with the timer (milestone 6). */
+/** Figma "Sidebar" (from 1024 px), with the "Now reading" card at the bottom. */
 function Sidebar({ path }: { path: string }) {
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col gap-7 border-r border-border bg-surface px-4 pt-7 pb-6 lg:flex">
@@ -54,6 +55,9 @@ function Sidebar({ path }: { path: string }) {
           );
         })}
       </nav>
+      <div className="mt-auto">
+        <NowReadingCard />
+      </div>
     </aside>
   );
 }

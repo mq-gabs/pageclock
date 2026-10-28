@@ -96,6 +96,7 @@ Express serves JSON under `/api`; Next.js rewrites `/api/*` to it, so the browse
 | PATCH  | /api/reading-sessions/:id                         | Same validation as create                                       |
 | DELETE | /api/reading-sessions/:id                         |                                                                 |
 | GET    | /api/timer                                        | The running session or null                                     |
+| PATCH  | /api/timer                                        | { startPage }; change the running timer's start page            |
 | POST   | /api/timer/start                                  | { bookId, startPage? }; 409 if one is running                   |
 | POST   | /api/timer/pause · /resume                        |                                                                 |
 | POST   | /api/timer/stop                                   | { endPage, confirmWarnings? }; same validation as create        |
@@ -241,7 +242,7 @@ Eight milestones, each ending in a working app; give Claude Code one milestone p
   - Check: add, edit, delete and filter books; screens match Figma at 390 and 1440 px.
 - [x] **5. Manual logging.** Session API (check, create, update, delete), Log session form, sessions list/table with Edit, progress and auto status.
   - Check: with a previous session ending on page 174, starting at 180 shows the banner; "Start at page 174" fixes it; "Save anyway" saves; the first session moves the book to Reading.
-- [ ] **6. Timer.** Timer API, Read screen, Finish session, Now reading card and nav.
+- [x] **6. Timer.** Timer API, Read screen, Finish session, Now reading card and nav.
   - Check: start, reload the page, timer still running; stop with an end page saves the session; starting a second timer returns 409.
 - [ ] **7. Stats.** Stats endpoints and the Stats screen (switcher, totals, bar chart, calendar, streaks).
   - Check: numbers on screen match the seeded data computed by hand for one month.

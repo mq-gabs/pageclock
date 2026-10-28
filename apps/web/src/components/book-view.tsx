@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { ApiRequestError } from '@/lib/api';
 import { appTimeZone } from '@/lib/config';
 import { formatDuration, formatRelativeDay, formatShortDate, formatSpeed } from '@/lib/format';
-import { useBook, useBookSessions } from '@/lib/queries';
+import { useBook, useBookSessions, useTimer } from '@/lib/queries';
+import { useStartReading } from '@/lib/use-start-reading';
 import { BookCover } from './book-cover';
 import { BookFormDialog } from './book-form-dialog';
 import { StatusChip } from './chip';
@@ -20,6 +21,8 @@ export function BookView({ id }: { id: string }) {
   const { data, isPending, error, refetch } = useBook(id);
   const sessions = useBookSessions(id);
   const [editing, setEditing] = useState(false);
+  const timer = useTimer();
+  const start = useStartReading();
 
   const back = (
     <Link
@@ -124,14 +127,29 @@ export function BookView({ id }: { id: string }) {
       </section>
 
       <div className="flex gap-2.5 lg:max-w-[480px]">
-        {/* Wired up with the timer in milestone 6. */}
-        <Button className="flex-1" disabled title="Coming with the timer">
-          Start reading
-        </Button>
+        {timer.data ? (
+          <Button className="flex-1" asChild>
+            <Link href="/read">Open timer</Link>
+          </Button>
+        ) : (
+          <Button
+            className="flex-1"
+            disabled={timer.isPending || start.isPending}
+            onClick={() => start.start(book.id)}
+          >
+            Start reading
+          </Button>
+        )}
         <Button variant="secondary" className="flex-1" asChild>
           <Link href={`/books/${book.id}/log`}>Log session</Link>
         </Button>
       </div>
+
+      {start.error && (
+        <p role="alert" className="-mt-2 text-meta text-destructive">
+          {start.error.message}
+        </p>
+      )}
 
       <section aria-labelledby="sessions-heading" className="flex flex-col gap-3">
         <h2 id="sessions-heading" className="text-[17px] font-semibold text-ink">
