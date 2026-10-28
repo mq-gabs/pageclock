@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   addDays,
@@ -28,7 +27,9 @@ import { PagesBarChart } from './pages-bar-chart';
 import { PeriodSwitcher } from './period-switcher';
 import { ReadingCalendar } from './reading-calendar';
 import { StatCard } from './stat-card';
-import { EmptyState, ErrorState, LoadingState } from './states';
+import { Skeleton, StatsBodySkeleton } from './skeletons';
+import { EmptyState, ErrorState } from './states';
+import { AppLink } from './app-link';
 
 /** "October 2026", "Oct 26 – Nov 1" or "2026". */
 function periodTitle(period: StatsPeriod, range: { from: string; to: string }) {
@@ -69,13 +70,7 @@ export function StatsView() {
   const calendarDaily = useStatsDaily(calendarRange);
 
   if (summary.isPending) {
-    return (
-      <StatsShell
-        period={period}
-        onPeriod={setPeriod}
-        body={<LoadingState label="Loading stats…" />}
-      />
-    );
+    return <StatsShell period={period} onPeriod={setPeriod} body={<StatsBodySkeleton />} />;
   }
   if (summary.isError || !s || !today) {
     return (
@@ -111,7 +106,7 @@ export function StatsView() {
               title="No reading logged yet"
               action={
                 <Button asChild size="sm">
-                  <Link href="/read">Start reading</Link>
+                  <AppLink href="/read">Start reading</AppLink>
                 </Button>
               }
             >
@@ -387,7 +382,10 @@ function Streaks({
     return failed ? (
       <ErrorState message="Couldn’t load streaks." onRetry={onRetry} className="py-6" />
     ) : (
-      <LoadingState className="py-6" />
+      <div className="grid grid-cols-2 gap-2.5 lg:gap-3">
+        <Skeleton className="h-[86px] rounded-card" />
+        <Skeleton className="h-[86px] rounded-card" />
+      </div>
     );
   }
   return (
@@ -426,6 +424,6 @@ function DailyState({
   return failed ? (
     <ErrorState message={`Couldn’t load ${what}.`} onRetry={onRetry} />
   ) : (
-    <LoadingState />
+    <Skeleton className="h-full min-h-[150px] w-full lg:min-h-[220px]" />
   );
 }

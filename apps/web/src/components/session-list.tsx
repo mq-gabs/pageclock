@@ -1,15 +1,22 @@
-import Link from 'next/link';
 import type { Session } from '@reading-tracker/shared';
 import { appTimeZone } from '@/lib/config';
 import { formatDayLabel, formatSessionDuration, formatSpeed, formatTime } from '@/lib/format';
+import { LocalLink } from './app-link';
 import { EmptyState } from './states';
 
-const editHref = (s: Session) => `/books/${s.bookId}/log?session=${s.id}`;
 const timeRange = (s: Session) =>
   `${formatTime(s.startedAt, appTimeZone)} – ${s.endedAt ? formatTime(s.endedAt, appTimeZone) : 'now'}`;
 
+interface SessionListProps {
+  sessions: Session[];
+  /** The URL of a session's Edit dialog (for new tabs and reloads). */
+  editHref: (session: Session) => string;
+  /** Opens that dialog on the current page. */
+  onEdit: (session: Session) => void;
+}
+
 /** Sessions newest first: Figma rows on mobile, a table with Edit from 1024 px. */
-export function SessionList({ sessions }: { sessions: Session[] }) {
+export function SessionList({ sessions, editHref, onEdit }: SessionListProps) {
   if (sessions.length === 0) {
     return (
       <EmptyState title="No sessions yet">
@@ -23,7 +30,7 @@ export function SessionList({ sessions }: { sessions: Session[] }) {
       <ul className="overflow-hidden rounded-card border border-border bg-surface lg:hidden">
         {sessions.map((s) => (
           <li key={s.id} className="border-b border-border last:border-b-0">
-            <SessionRow session={s} />
+            <SessionRow session={s} href={editHref(s)} onEdit={() => onEdit(s)} />
           </li>
         ))}
       </ul>
@@ -76,13 +83,17 @@ export function SessionList({ sessions }: { sessions: Session[] }) {
                 </td>
                 <td className="px-4 py-3 text-right">
                   {s.metrics && (
-                    <Link href={editHref(s)} className="font-medium text-accent hover:underline">
+                    <LocalLink
+                      href={editHref(s)}
+                      onOpen={() => onEdit(s)}
+                      className="font-medium text-accent hover:underline"
+                    >
                       Edit
                       <span className="sr-only">
                         {' '}
                         session on {formatDayLabel(s.startedAt, appTimeZone)}
                       </span>
-                    </Link>
+                    </LocalLink>
                   )}
                 </td>
               </tr>
@@ -95,7 +106,15 @@ export function SessionList({ sessions }: { sessions: Session[] }) {
 }
 
 /** Figma "Session" row. Tapping a finished session opens it for editing. */
-function SessionRow({ session: s }: { session: Session }) {
+function SessionRow({
+  session: s,
+  href,
+  onEdit,
+}: {
+  session: Session;
+  href: string;
+  onEdit: () => void;
+}) {
   const content = (
     <>
       <div className="flex min-w-0 flex-col gap-0.5">
@@ -119,13 +138,14 @@ function SessionRow({ session: s }: { session: Session }) {
   );
   const className = 'flex items-center justify-between gap-3 px-4 py-3';
   return s.metrics ? (
-    <Link
-      href={editHref(s)}
+    <LocalLink
+      href={href}
+      onOpen={onEdit}
       className={`${className} hover:bg-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring`}
     >
       {content}
       <span className="sr-only">Edit session</span>
-    </Link>
+    </LocalLink>
   ) : (
     <div className={className}>{content}</div>
   );

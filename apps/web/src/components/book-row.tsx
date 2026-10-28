@@ -1,15 +1,15 @@
-import Link from 'next/link';
 import type { BookWithProgress } from '@reading-tracker/shared';
 import { appTimeZone } from '@/lib/config';
 import { formatBookMeta } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { BookCover } from './book-cover';
 import { ProgressBar } from './progress-bar';
+import { AppLink } from './app-link';
 
 /** Figma "Book row": cover, title, author, progress and status line; links to the book. */
 export function BookRow({ book, className }: { book: BookWithProgress; className?: string }) {
   return (
-    <Link
+    <AppLink
       href={`/books/${book.id}`}
       className={cn(
         'flex items-center gap-3.5 rounded-card border border-border bg-surface p-3 transition-colors hover:border-muted/40',
@@ -27,6 +27,6 @@ export function BookRow({ book, className }: { book: BookWithProgress; className
         </div>
         <p className="truncate text-meta text-muted">{formatBookMeta(book, appTimeZone)}</p>
       </div>
-    </Link>
+    </AppLink>
   );
 }

@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { bookStatusSchema, type BookCounts, type BookStatus } from '@reading-tracker/shared';
 import { BookFormDialog } from '@/components/book-form-dialog';
 import { BookRow } from '@/components/book-row';
 import { Chip } from '@/components/chip';
 import { SearchInput } from '@/components/search-input';
-import { EmptyState, ErrorState, LoadingState } from '@/components/states';
+import { BookRowsSkeleton } from '@/components/skeletons';
+import { EmptyState, ErrorState } from '@/components/states';
 import { Button } from '@/components/ui/button';
 import { useBooks } from '@/lib/queries';
 import { cn } from '@/lib/utils';
@@ -21,7 +22,6 @@ const filters: { value: BookStatus | undefined; label: string; key: keyof BookCo
 
 /** Library: filters and search live in the URL (`?status=&q=`) so they survive reloads. */
 export function LibraryView() {
-  const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
   const parsedStatus = bookStatusSchema.safeParse(params.get('status'));
@@ -33,7 +33,8 @@ export function LibraryView() {
   const { data, isPending, isError, refetch } = useBooks({ status, q: q.trim() || undefined });
 
   // Builds on the live URL, not on this render's values, so a debounced search can't
-  // overwrite a filter chosen in the meantime.
+  // overwrite a filter chosen in the meantime. `replaceState` updates `useSearchParams`
+  // without a server round trip, so filters apply at once.
   const setParams = (next: { status?: BookStatus; q?: string }) => {
     const merged = new URLSearchParams(window.location.search);
     if ('status' in next) {
@@ -45,7 +46,7 @@ export function LibraryView() {
       if (nextQ) merged.set('q', nextQ);
       else merged.delete('q');
     }
-    router.replace(merged.size ? `${pathname}?${merged}` : pathname, { scroll: false });
+    window.history.replaceState(null, '', merged.size ? `${pathname}?${merged}` : pathname);
   };
 
   // Debounce typing into the URL.
@@ -107,7 +108,7 @@ export function LibraryView() {
       </div>
 
       {isPending ? (
-        <LoadingState label="Loading books…" />
+        <BookRowsSkeleton count={6} />
       ) : isError ? (
         <ErrorState message="Couldn’t load your library." onRetry={() => refetch()} />
       ) : books.length === 0 ? (

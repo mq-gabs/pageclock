@@ -1,12 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import { timerElapsedSeconds } from '@reading-tracker/shared';
 import { Button } from '@/components/ui/button';
 import { formatClock } from '@/lib/format';
 import { useBooks, useTimer } from '@/lib/queries';
 import { useNow } from '@/lib/use-now';
 import { useStartReading } from '@/lib/use-start-reading';
+import { AppLink } from './app-link';
 
 const shell = 'flex flex-col rounded-card border border-border bg-bg p-3.5';
 const label = 'text-[11px] font-semibold text-muted uppercase';
@@ -45,7 +45,7 @@ export function NowReadingCard() {
           {paused ? 'Paused' : 'Running'} · {formatClock(elapsed)}
         </p>
         <Button asChild size="compact" className="mt-2">
-          <Link href="/read">Open timer</Link>
+          <AppLink href="/read">Open timer</AppLink>
         </Button>
       </section>
     );
@@ -57,9 +57,9 @@ export function NowReadingCard() {
   return (
     <section aria-label="Now reading" className={shell}>
       <p className={label}>Now reading</p>
-      <Link href={`/books/${book.id}`} className={`${title} hover:underline`}>
+      <AppLink href={`/books/${book.id}`} className={`${title} hover:underline`}>
         {book.title}
-      </Link>
+      </AppLink>
       <p className={meta}>
         p. {book.progress} of {book.totalPages} · {book.percent}%
       </p>

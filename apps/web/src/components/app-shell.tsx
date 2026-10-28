@@ -1,10 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpen, ChartColumn, Timer, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NowReadingCard } from './now-reading-card';
+import { AppLink } from './app-link';
+import { NavigationProgress } from './navigation-progress';
 
 interface NavItem {
   href: string;
@@ -28,17 +29,17 @@ const navItems: NavItem[] = [
 function Sidebar({ path }: { path: string }) {
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col gap-7 border-r border-border bg-surface px-4 pt-7 pb-6 lg:flex">
-      <Link href="/library" className="flex items-center gap-2.5 pl-2">
+      <AppLink href="/library" className="flex items-center gap-2.5 pl-2">
         <span className="flex size-[30px] items-center justify-center rounded-[8px] bg-accent">
           <BookOpen aria-hidden size={16} className="text-surface" />
         </span>
         <span className="text-[15px] font-bold text-ink">Reading Tracker</span>
-      </Link>
+      </AppLink>
       <nav aria-label="Main" className="flex flex-col gap-1">
         {navItems.map(({ href, label, icon: Icon, matches }) => {
           const active = matches(path);
           return (
-            <Link
+            <AppLink
               key={href}
               href={href}
               aria-current={active ? 'page' : undefined}
@@ -51,7 +52,7 @@ function Sidebar({ path }: { path: string }) {
             >
               <Icon aria-hidden size={20} />
               {label}
-            </Link>
+            </AppLink>
           );
         })}
       </nav>
@@ -72,7 +73,7 @@ function BottomNav({ path }: { path: string }) {
       {navItems.map(({ href, label, icon: Icon, matches }) => {
         const active = matches(path);
         return (
-          <Link
+          <AppLink
             key={href}
             href={href}
             aria-current={active ? 'page' : undefined}
@@ -83,7 +84,7 @@ function BottomNav({ path }: { path: string }) {
           >
             <Icon aria-hidden size={22} />
             {label}
-          </Link>
+          </AppLink>
         );
       })}
     </nav>
@@ -94,6 +95,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   return (
     <div className="min-h-screen lg:flex">
+      <NavigationProgress />
       <a
         href="#content"
         className="sr-only z-50 rounded-button border border-border bg-surface font-semibold text-accent shadow-sm focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:px-4 focus:py-2"

@@ -1,44 +1,77 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { bookStatusLabels } from '@reading-tracker/shared';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { ApiRequestError } from '@/lib/api';
 import { appTimeZone } from '@/lib/config';
 import { formatDuration, formatRelativeDay, formatShortDate, formatSpeed } from '@/lib/format';
 import { useBook, useBookSessions, useTimer } from '@/lib/queries';
+import { useLocalDialog } from '@/lib/use-local-dialog';
 import { useStartReading } from '@/lib/use-start-reading';
+import { AppLink, LocalLink } from './app-link';
 import { BookCover } from './book-cover';
 import { BookFormDialog } from './book-form-dialog';
 import { StatusChip } from './chip';
+import { LogSessionForm } from './log-session-form';
 import { ProgressBar } from './progress-bar';
 import { SessionList } from './session-list';
 import { StatCard } from './stat-card';
-import { ErrorState, LoadingState } from './states';
+import { BookSkeleton, DialogFormSkeleton, SessionsSkeleton } from './skeletons';
+import { ErrorState } from './states';
 
-/** The Book screen. Also rendered behind the Log session dialog on desktop. */
+const logHref = (bookId: string, sessionId?: string) =>
+  sessionId ? `/books/${bookId}/log?session=${sessionId}` : `/books/${bookId}/log`;
+
+/**
+ * The Book screen, for both `/books/[id]` and `/books/[id]/log` (`?session=<id>` edits one).
+ * Log session is a local dialog: opening it only pushes its URL, so it shows at once.
+ */
 export function BookView({ id }: { id: string }) {
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const dialog = useLocalDialog(`/books/${id}`);
+  const logOpen = pathname === logHref(id);
+  return (
+    <>
+      <BookScreen id={id} onLog={(sessionId) => dialog.open(logHref(id, sessionId))} />
+      <LogSessionDialog
+        bookId={id}
+        open={logOpen}
+        sessionId={logOpen ? params.get('session') : null}
+        onClose={dialog.close}
+      />
+    </>
+  );
+}
+
+function BookScreen({ id, onLog }: { id: string; onLog: (sessionId?: string) => void }) {
   const { data, isPending, error, refetch } = useBook(id);
   const sessions = useBookSessions(id);
   const [editing, setEditing] = useState(false);
   const timer = useTimer();
   const start = useStartReading();
+  const title = data?.book.title;
+  useEffect(() => {
+    if (title) document.title = `${title} · Reading Tracker`;
+  }, [title]);
 
   const back = (
-    <Link
+    <AppLink
       href="/library"
       className="self-start text-[15px] font-medium text-accent hover:underline"
     >
       ‹ Library
-    </Link>
+    </AppLink>
   );
 
   if (isPending) {
     return (
-      <main className="flex flex-col gap-4 px-5 pt-6 lg:px-12 lg:py-10">
+      <main className="flex flex-col gap-4 px-5 pt-6 pb-5 lg:max-w-[960px] lg:gap-6 lg:px-12 lg:py-10">
         {back}
-        <LoadingState label="Loading book…" />
+        <BookSkeleton />
       </main>
     );
   }
@@ -127,7 +160,7 @@ export function BookView({ id }: { id: string }) {
       <div className="flex gap-2.5 lg:max-w-[480px]">
         {timer.data ? (
           <Button className="flex-1" asChild>
-            <Link href="/read">Open timer</Link>
+            <AppLink href="/read">Open timer</AppLink>
           </Button>
         ) : (
           <Button
@@ -139,7 +172,9 @@ export function BookView({ id }: { id: string }) {
           </Button>
         )}
         <Button variant="secondary" className="flex-1" asChild>
-          <Link href={`/books/${book.id}/log`}>Log session</Link>
+          <LocalLink href={logHref(book.id)} onOpen={() => onLog()}>
+            Log session
+          </LocalLink>
         </Button>
       </div>
 
@@ -154,7 +189,7 @@ export function BookView({ id }: { id: string }) {
           Sessions
         </h2>
         {sessions.isPending ? (
-          <LoadingState label="Loading sessions…" className="py-6" />
+          <SessionsSkeleton />
         ) : sessions.isError ? (
           <ErrorState
             message="Couldn’t load sessions."
@@ -162,11 +197,61 @@ export function BookView({ id }: { id: string }) {
             className="py-6"
           />
         ) : (
-          <SessionList sessions={sessions.data.sessions} />
+          <SessionList
+            sessions={sessions.data.sessions}
+            editHref={(s) => logHref(id, s.id)}
+            onEdit={(s) => onLog(s.id)}
+          />
         )}
       </section>
 
       <BookFormDialog mode="edit" book={book} open={editing} onOpenChange={setEditing} />
     </main>
+  );
+}
+
+function LogSessionDialog({
+  bookId,
+  open,
+  sessionId,
+  onClose,
+}: {
+  bookId: string;
+  open: boolean;
+  sessionId: string | null;
+  onClose: () => void;
+}) {
+  const book = useBook(bookId);
+  const sessions = useBookSessions(bookId);
+  const session = sessionId ? sessions.data?.sessions.find((s) => s.id === sessionId) : undefined;
+  const loading = book.isPending || (sessionId !== null && sessions.isPending);
+  const missing =
+    book.isError || (sessionId !== null && !loading && (!session || !session.endedAt));
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="lg:w-[560px]" aria-describedby={undefined}>
+        {loading ? (
+          <>
+            <DialogTitle className="sr-only">
+              {sessionId ? 'Edit session' : 'Log session'}
+            </DialogTitle>
+            <DialogFormSkeleton fields={4} />
+          </>
+        ) : missing || !book.data ? (
+          <>
+            <DialogTitle className="text-section-sm font-bold text-ink">Not found</DialogTitle>
+            <p className="text-[14px] text-muted">This book or session doesn’t exist.</p>
+          </>
+        ) : (
+          <LogSessionForm
+            key={session?.id ?? 'new'}
+            book={book.data.book}
+            session={session}
+            onClose={onClose}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

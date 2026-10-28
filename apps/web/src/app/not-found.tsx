@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { AppLink } from '@/components/app-link';
 
 export const metadata: Metadata = { title: 'Page not found' };
 
@@ -12,7 +12,7 @@ export default function NotFound() {
         There’s nothing at this address. It may have moved, or the link is wrong.
       </p>
       <Button asChild className="mt-2">
-        <Link href="/library">Go to the library</Link>
+        <AppLink href="/library">Go to the library</AppLink>
       </Button>
     </main>
   );

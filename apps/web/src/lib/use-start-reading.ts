@@ -1,12 +1,12 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { ApiRequestError } from './api';
+import { useAppRouter } from './navigation-progress';
 import { useStartTimer } from './queries';
 
 /** "Start reading": start the timer for a book (rule 1 picks the start page) and open /read. */
 export function useStartReading() {
-  const router = useRouter();
+  const router = useAppRouter();
   const mutation = useStartTimer();
   // mutateAsync: the caller may unmount once the timer lands in the cache (e.g. the /read picker).
   const start = (bookId: string) =>

@@ -109,3 +109,33 @@
     outline-offset: 2px;
   }
 }
+
+/* NavigationProgress: fade in after 150 ms, then slide an accent bar across. */
+@keyframes nav-progress-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes nav-progress-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+.nav-progress-visible {
+  animation: nav-progress-fade-in 150ms ease-out 150ms both;
+}
+.nav-progress-bar {
+  animation: nav-progress-slide 1.1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-progress-bar {
+    width: 100%;
+    animation: none;
+  }
+}

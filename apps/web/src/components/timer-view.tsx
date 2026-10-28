@@ -1,27 +1,43 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { timerElapsedSeconds, type Timer } from '@reading-tracker/shared';
 import { Button } from '@/components/ui/button';
 import { ApiRequestError } from '@/lib/api';
 import { appTimeZone } from '@/lib/config';
 import { formatBookMeta, formatClock, formatShortDate, formatTime } from '@/lib/format';
 import { useBooks, usePauseTimer, useTimer, useUpdateTimer } from '@/lib/queries';
+import { useLocalDialog } from '@/lib/use-local-dialog';
 import { useNow } from '@/lib/use-now';
 import { useStartReading } from '@/lib/use-start-reading';
+import { AppLink } from './app-link';
 import { BookCover } from './book-cover';
 import { Field } from './field';
-import { EmptyState, ErrorState, LoadingState } from './states';
+import { FinishSessionDialog } from './finish-session-dialog';
+import { BookRowsSkeleton, TimerSkeleton } from './skeletons';
+import { EmptyState, ErrorState } from './states';
 
-/** The Read screen: the running timer, or a book picker to start one. */
+/**
+ * The Read screen, for both `/read` and `/read/finish`. Finish session is a local dialog:
+ * Stop only pushes its URL, so it shows at once.
+ */
 export function TimerView() {
+  const pathname = usePathname();
+  const dialog = useLocalDialog('/read');
+  return (
+    <>
+      <TimerScreen onStop={() => dialog.open('/read/finish')} />
+      <FinishSessionDialog open={pathname === '/read/finish'} onClose={dialog.close} />
+    </>
+  );
+}
+
+/** The running timer, or a book picker to start one. */
+function TimerScreen({ onStop }: { onStop: () => void }) {
   const { data: timer, isPending, isError, refetch } = useTimer();
 
-  if (isPending) {
-    return <LoadingState label="Loading timer…" className="py-16" />;
-  }
+  if (isPending) return <TimerSkeleton />;
   if (isError) {
     return (
       <ErrorState
@@ -31,13 +47,16 @@ export function TimerView() {
       />
     );
   }
-  return timer ? <RunningTimer key={timer.session.id} timer={timer} /> : <StartPicker />;
+  return timer ? (
+    <RunningTimer key={timer.session.id} timer={timer} onStop={onStop} />
+  ) : (
+    <StartPicker />
+  );
 }
 
 /** Figma "Timer": elapsed time, start page, Pause and Stop (a centered 560 px card on desktop). */
-function RunningTimer({ timer }: { timer: Timer }) {
+function RunningTimer({ timer, onStop }: { timer: Timer; onStop: () => void }) {
   const { session, book, previous } = timer;
-  const router = useRouter();
   const paused = session.pausedAt !== null;
   const now = useNow(!paused);
   const pause = usePauseTimer();
@@ -50,10 +69,11 @@ function RunningTimer({ timer }: { timer: Timer }) {
     now,
   );
 
-  // Stop freezes the clock (a paused timer ends when it was paused), then asks for the end page.
+  // Stop asks for the end page right away and freezes the clock in the background (a paused
+  // timer ends when it was paused). If the pause fails, stopping still ends the session "now".
   const stop = () => {
-    if (paused) router.push('/read/finish');
-    else pause.mutate('pause', { onSuccess: () => router.push('/read/finish') });
+    if (!paused) pause.mutate('pause');
+    onStop();
   };
 
   return (
@@ -62,9 +82,9 @@ function RunningTimer({ timer }: { timer: Timer }) {
         <header className="flex flex-col gap-1 lg:items-center lg:text-center">
           <p className="text-meta font-semibold text-muted uppercase">Reading now</p>
           <h1 className="text-[20px] font-bold text-ink lg:text-section-sm">
-            <Link href={`/books/${book.id}`} className="hover:underline">
+            <AppLink href={`/books/${book.id}`} className="hover:underline">
               {book.title}
-            </Link>
+            </AppLink>
           </h1>
         </header>
 
@@ -198,7 +218,7 @@ function StartPicker() {
       )}
 
       {isPending ? (
-        <LoadingState label="Loading books…" />
+        <BookRowsSkeleton count={3} className="lg:grid-cols-2" />
       ) : isError ? (
         <ErrorState message="Couldn’t load your books." onRetry={() => refetch()} />
       ) : books.length === 0 ? (
@@ -206,7 +226,7 @@ function StartPicker() {
           title="Nothing to read yet"
           action={
             <Button asChild variant="secondary" size="sm">
-              <Link href="/library">Go to the library</Link>
+              <AppLink href="/library">Go to the library</AppLink>
             </Button>
           }
         >

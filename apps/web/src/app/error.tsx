@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { AppLink } from '@/components/app-link';
 
 /** Unexpected render errors in any page: the shell stays, the page offers a retry. */
 export default function PageError({ error, retry }: { error: unknown; retry: () => void }) {
@@ -21,7 +21,7 @@ export default function PageError({ error, retry }: { error: unknown; retry: () 
           Try again
         </Button>
         <Button asChild>
-          <Link href="/library">Go to the library</Link>
+          <AppLink href="/library">Go to the library</AppLink>
         </Button>
       </div>
     </main>

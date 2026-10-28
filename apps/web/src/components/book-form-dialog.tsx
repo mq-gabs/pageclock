@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -23,6 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { ApiRequestError } from '@/lib/api';
 import { useCreateBook, useDeleteBook, useUpdateBook } from '@/lib/queries';
+import { useAppRouter } from '@/lib/navigation-progress';
 import { Chip } from './chip';
 import { Field } from './field';
 
@@ -169,7 +169,7 @@ function BookForm(props: BookFormDialogProps) {
 }
 
 function DeleteConfirm({ book, onCancel }: { book: BookWithProgress; onCancel: () => void }) {
-  const router = useRouter();
+  const router = useAppRouter();
   const remove = useDeleteBook(book.id);
   return (
     <div className="flex flex-1 flex-col gap-5">

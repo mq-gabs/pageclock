@@ -1,28 +1,5 @@
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
-/** A polite "Loading …" with a spinner (still for people who prefer reduced motion). */
-export function LoadingState({
-  label = 'Loading…',
-  className,
-}: {
-  label?: string;
-  className?: string;
-}) {
-  return (
-    <div
-      role="status"
-      className={cn(
-        'flex items-center justify-center gap-2 py-10 text-[14px] text-muted',
-        className,
-      )}
-    >
-      <Loader2 aria-hidden size={16} className="motion-safe:animate-spin" />
-      {label}
-    </div>
-  );
-}
 
 /** A failed load, announced to screen readers, with a retry button when one makes sense. */
 export function ErrorState({
