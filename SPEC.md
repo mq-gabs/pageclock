@@ -233,7 +233,7 @@ Eight milestones, each ending in a working app; give Claude Code one milestone p
 
 - [x] **1. Workspace and tooling.** Nx workspace with `web`, `api`, `shared`; Tailwind + shadcn/ui with the design tokens; lint, typecheck and test targets; Next.js rewrite of `/api/*` to Express; `GET /api/health`.
   - Check: `run-many -t dev` serves both apps and `/api/health` answers through the web origin; lint, typecheck and test pass.
-- [ ] **2. Database.** Drizzle schema and first migration, seed script with demo books and sessions, `db-generate`, `db-migrate` and `db-seed` targets.
+- [x] **2. Database.** Drizzle schema and first migration, seed script with demo books and sessions, `db-generate`, `db-migrate` and `db-seed` targets.
   - Check: a fresh database migrates and seeds, and `GET /api/books` returns the seeded books.
 - [ ] **3. Shared rules and stats.** suggestStartPage, validateSession, checkPages, summary, daily, streaks, all pure and tested.
   - Check: tests cover gap, overlap, no previous session, sessions near midnight in America/Fortaleza, and the Metrics formulas.

@@ -38,4 +38,9 @@ export default [
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
+  {
+    // Tests assert a value exists before using it, so `!` is fine there.
+    files: ['**/*.test.ts', '**/*.test.tsx'],
+    rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
+  },
 ];

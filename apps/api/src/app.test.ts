@@ -2,8 +2,9 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { apiErrorSchema, healthResponseSchema } from '@reading-tracker/shared';
 import { createApp } from './app';
+import { createTestDb } from './test/db';
 
-const app = createApp();
+const app = createApp({ db: createTestDb() });
 
 describe('GET /api/health', () => {
   it('returns ok', async () => {

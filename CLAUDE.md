@@ -33,3 +33,5 @@
 - Ports: web 3000, api 3333. Next rewrites `/api/*` to `API_URL` (default `http://localhost:3333`).
 - Design tokens are CSS variables in `apps/web/src/app/globals.css`, exposed as Tailwind colors (`bg-surface`, `text-muted`, `bg-heat-2`, …), radii (`rounded-card|button|input|cell`) and text sizes (`text-title|section|body|label|meta`). shadcn/ui variables are mapped onto them.
 - TypeScript is pinned to 6.0 and ESLint to 9: typescript-eslint and eslint-config-next don't support TS 7 / ESLint 10 yet.
+- Database: SQLite file at `apps/api/data/reading-tracker.db` (`DATABASE_URL`, relative to `apps/api`). `db-migrate` applies `apps/api/drizzle/`; the API does not migrate on startup. `db-seed` wipes and reloads the demo library, with dates relative to today in `APP_TIMEZONE`.
+- `createApp({ db })` takes its database; API tests use `createTestDb()` (`apps/api/src/test/db.ts`), a migrated in-memory SQLite.
