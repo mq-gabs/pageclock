@@ -1,4 +1,8 @@
-import { apiErrorSchema } from '@reading-tracker/shared';
+import {
+  apiErrorSchema,
+  apiWarningsResponseSchema,
+  type ApiWarning,
+} from '@reading-tracker/shared';
 import type { z } from 'zod';
 
 /** A non-2xx response, carrying the API's `{ error: { code, message, fields } }` body. */
@@ -13,6 +17,13 @@ export class ApiRequestError extends Error {
   }
 }
 
+/** A 409 with `{ warnings }` (rule 4): resend with `confirmWarnings: true` to save anyway. */
+export class ApiWarningsError extends Error {
+  constructor(readonly warnings: ApiWarning[]) {
+    super('Check the warnings before saving');
+  }
+}
+
 type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 
 async function send(method: Method, path: string, body?: unknown): Promise<Response> {
@@ -23,7 +34,12 @@ async function send(method: Method, path: string, body?: unknown): Promise<Respo
   });
   if (res.ok) return res;
 
-  const parsed = apiErrorSchema.safeParse(await res.json().catch(() => null));
+  const json: unknown = await res.json().catch(() => null);
+  if (res.status === 409) {
+    const warnings = apiWarningsResponseSchema.safeParse(json);
+    if (warnings.success) throw new ApiWarningsError(warnings.data.warnings);
+  }
+  const parsed = apiErrorSchema.safeParse(json);
   if (parsed.success) {
     const { code, message, fields } = parsed.data.error;
     throw new ApiRequestError(res.status, code, message, fields);

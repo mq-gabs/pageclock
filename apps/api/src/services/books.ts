@@ -83,10 +83,14 @@ export function listBooks(db: Db, query: ListBooksQuery): ListBooksResponse {
   return { books: listed.map((row) => withProgress(row, endPages.get(row.id) ?? [])), counts };
 }
 
-function findBookRow(db: DbOrTx, id: string): BookRow {
+export function findBookRow(db: DbOrTx, id: string): BookRow {
   const row = db.select().from(books).where(eq(books.id, id)).get();
   if (!row) throw new HttpError(404, 'not_found', 'Book not found');
   return row;
+}
+
+export function getBookWithProgress(db: DbOrTx, id: string): BookWithProgress {
+  return withProgress(findBookRow(db, id), endPagesByBook(db, [id]).get(id) ?? []);
 }
 
 export function getBook(db: Db, id: string): BookDetail {

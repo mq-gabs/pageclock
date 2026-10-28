@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import type { BookWithProgress } from '@reading-tracker/shared';
 import {
   formatBookMeta,
+  formatDayLabel,
   formatDuration,
   formatRelativeDay,
   formatShortDate,
   formatSpeed,
+  formatTime,
 } from './format';
 
 const TZ = 'America/Fortaleza';
@@ -29,6 +31,11 @@ describe('formatSpeed', () => {
 describe('dates', () => {
   it('formats in the app time zone', () => {
     expect(formatShortDate('2026-10-13T02:00:00Z', TZ)).toBe('Oct 12'); // 23:00 local
+  });
+
+  it('labels a session by its local start', () => {
+    expect(formatDayLabel('2026-10-28T02:30:00Z', TZ)).toBe('Tue, Oct 27');
+    expect(formatTime('2026-10-28T02:30:00Z', TZ)).toBe('23:30');
   });
 
   it('describes days relative to now, by local date', () => {

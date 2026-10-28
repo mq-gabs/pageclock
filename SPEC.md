@@ -239,7 +239,7 @@ Eight milestones, each ending in a working app; give Claude Code one milestone p
   - Check: tests cover gap, overlap, no previous session, sessions near midnight in America/Fortaleza, and the Metrics formulas.
 - [x] **4. Books.** Books API, BookCover placeholder, and the Library and Book screens (Book without sessions yet), mobile and desktop.
   - Check: add, edit, delete and filter books; screens match Figma at 390 and 1440 px.
-- [ ] **5. Manual logging.** Session API (check, create, update, delete), Log session form, sessions list/table with Edit, progress and auto status.
+- [x] **5. Manual logging.** Session API (check, create, update, delete), Log session form, sessions list/table with Edit, progress and auto status.
   - Check: with a previous session ending on page 174, starting at 180 shows the banner; "Start at page 174" fixes it; "Save anyway" saves; the first session moves the book to Reading.
 - [ ] **6. Timer.** Timer API, Read screen, Finish session, Now reading card and nav.
   - Check: start, reload the page, timer still running; stop with an end page saves the session; starting a second timer returns 409.

@@ -44,3 +44,13 @@ export function formatBookMeta(book: BookWithProgress, timeZone: string): string
   if (book.progress > 0) return `${status} · p. ${book.progress} of ${book.totalPages}`;
   return `${status} · ${book.totalPages} pages`;
 }
+
+/** "Mon, Oct 27" in the app's time zone. */
+export function formatDayLabel(iso: string, timeZone: string): string {
+  return format(new TZDate(new Date(iso).getTime(), timeZone), 'EEE, MMM d');
+}
+
+/** "20:10" in the app's time zone. */
+export function formatTime(iso: string, timeZone: string): string {
+  return format(new TZDate(new Date(iso).getTime(), timeZone), 'HH:mm');
+}

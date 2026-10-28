@@ -1,5 +1,5 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
-import type { ApiError } from '@reading-tracker/shared';
+import type { ApiError, ApiWarning } from '@reading-tracker/shared';
 import { logger } from '../logger';
 
 export class HttpError extends Error {
@@ -13,11 +13,22 @@ export class HttpError extends Error {
   }
 }
 
+/** Rule 4: a save with warnings answers 409 `{ warnings }` until the client confirms them. */
+export class WarningsError extends Error {
+  constructor(readonly warnings: ApiWarning[]) {
+    super('Confirm the warnings to save');
+  }
+}
+
 export const notFound: RequestHandler = (req, _res, next) => {
   next(new HttpError(404, 'not_found', `No route for ${req.method} ${req.path}`));
 };
 
 export const errorHandler: ErrorRequestHandler = (err: unknown, _req, res, _next) => {
+  if (err instanceof WarningsError) {
+    res.status(409).json({ warnings: err.warnings });
+    return;
+  }
   if (err instanceof HttpError) {
     const body: ApiError = { error: { code: err.code, message: err.message, fields: err.fields } };
     res.status(err.status).json(body);

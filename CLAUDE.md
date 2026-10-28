@@ -43,3 +43,7 @@
 - Figma uses Inter's `normal` line height (set on `body`); sizes outside the token scale (15, 14, 17, 11 px) use arbitrary `text-[15px]` classes. `cn()` knows the custom `text-*` size tokens, so `cn('text-label', 'text-muted')` keeps both.
 - Icons are lucide-react (same glyphs as the Figma SVGs) so they take token colors via `currentColor`.
 - Dialogs (`components/ui/dialog.tsx`) are full screen below `lg` and a centered 480 px card from `lg`.
+- Saving a session (create, edit, and the timer stop in milestone 6) goes through `saveSession()` in `apps/api/src/services/sessions.ts`: one transaction that runs rules 2–4, throws `HttpError` 400 or `WarningsError` (→ 409 `{ warnings }`), writes, then applies rule 6 and bumps the book's `updatedAt`. It returns `{ session, book, offerFinish }`.
+- On the web, a 409 becomes `ApiWarningsError` (`lib/api.ts`); the Log session form shows it in `PageCheckBanner` and "Save anyway" resends with `confirmWarnings: true`.
+- Form dates and times are in `appTimeZone`, converted with `lib/local-time.ts`; an end time at or before the start time means the session ends the next day.
+- `/books/[id]/log` (`?session=<id>` to edit) renders `BookView` behind a `Dialog`: full screen on mobile, 560 px on desktop.
