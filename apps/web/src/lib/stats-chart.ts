@@ -18,6 +18,7 @@ export function chartBars(period: StatsPeriod, days: readonly Day[], today: stri
       title: formatDateKey(`${m.month}-01`, 'MMMM yyyy'),
       pages: m.pages,
       minutes: m.minutes,
+      books: m.books,
       current: m.month === thisMonth,
     }));
   }
@@ -27,6 +28,7 @@ export function chartBars(period: StatsPeriod, days: readonly Day[], today: stri
     title: formatDateKey(d.date, 'EEE, MMM d'),
     pages: d.pages,
     minutes: d.minutes,
+    books: d.books,
     current: d.date === today,
   }));
 }

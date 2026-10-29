@@ -6,6 +6,7 @@ import {
   addDays,
   bestDay,
   periodRange,
+  type StatsDailyResponse,
   type StatsPeriod,
   type StatsSummaryResponse,
 } from '@reading-tracker/shared';
@@ -263,8 +264,16 @@ function Totals({
       ? `${Math.round((current.readingDays / daysSoFar) * 100)}% of days${isCurrent ? ' so far' : ''}`
       : undefined;
 
+  const booksDelta = current.books - previous.books;
+  const booksSub =
+    previous.books === 0
+      ? `none in ${vs}`
+      : booksDelta === 0
+        ? `same as ${vs}`
+        : `${formatDelta(booksDelta)} vs ${vs}`;
+
   return (
-    <section aria-label="Totals" className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-4">
+    <section aria-label="Totals" className="grid grid-cols-2 gap-2.5 lg:grid-cols-5 lg:gap-4">
       <StatCard label="Pages" value={formatCount(current.pages)} sub={pagesSub} />
       <StatCard
         label="Time"
@@ -281,6 +290,12 @@ function Totals({
         value={`${current.readingDays} of ${daysSoFar}`}
         sub={daysSub}
       />
+      <StatCard
+        label="Books"
+        value={formatCount(current.books)}
+        sub={booksSub}
+        className="col-span-2 lg:col-span-1"
+      />
     </section>
   );
 }
@@ -295,7 +310,7 @@ function ChartCard({
 }: {
   period: StatsPeriod;
   summary: StatsSummaryResponse;
-  days: { date: string; pages: number; minutes: number; sessions: number }[] | undefined;
+  days: StatsDailyResponse['days'] | undefined;
   failed: boolean;
   onRetry: () => void;
   desktop: boolean;

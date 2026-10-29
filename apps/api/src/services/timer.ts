@@ -64,7 +64,8 @@ export function startTimer(db: Db, input: StartTimerInput, now = new Date()): Ti
       throw new HttpError(409, 'timer_running', 'A timer is already running');
     }
     const book = findBookRow(tx, input.bookId);
-    const startPage = input.startPage ?? suggestStartPage(bookSessions(tx, book.id), now, book.totalPages);
+    const startPage =
+      input.startPage ?? suggestStartPage(bookSessions(tx, book.id), now, book.totalPages);
     assertStartPage(startPage, book.totalPages);
     const row = tx
       .insert(readingSessions)

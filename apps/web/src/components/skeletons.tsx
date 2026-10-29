@@ -158,13 +158,16 @@ export function TimerSkeleton() {
   );
 }
 
-/** The Stats body: four totals, chart, calendar and streaks. */
+/** The Stats body: five totals, chart, calendar and streaks. */
 export function StatsBodySkeleton() {
   return (
     <Busy label="Loading stats" className="flex flex-col gap-4 lg:gap-6">
-      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-4">
-        {Array.from({ length: 4 }, (_, i) => (
-          <Skeleton key={i} className="h-[86px] rounded-card" />
+      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-5 lg:gap-4">
+        {Array.from({ length: 5 }, (_, i) => (
+          <Skeleton
+            key={i}
+            className={cn('h-[86px] rounded-card', i === 4 && 'col-span-2 lg:col-span-1')}
+          />
         ))}
       </div>
       <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_420px]">

@@ -11,6 +11,8 @@ export interface ChartBar {
   title: string;
   pages: number;
   minutes: number;
+  /** The books read in that day (or month), most pages first. */
+  books: { bookId: string; title: string; pages: number; minutes: number }[];
   /** Today (or this month) is drawn darker. */
   current: boolean;
 }
@@ -72,11 +74,25 @@ export function PagesBarChart({
               const bar = payload?.[0]?.payload as ChartBar | undefined;
               if (!active || !bar) return null;
               return (
-                <div className="rounded-input border border-border bg-surface px-3 py-2 text-meta shadow-sm">
+                <div className="max-w-72 rounded-input border border-border bg-surface px-3 py-2 text-meta shadow-sm">
                   <p className="font-semibold text-ink">{bar.title}</p>
                   <p className="text-muted">
                     {bar.pages} pages · {formatDuration(bar.minutes)}
+                    {bar.books.length > 0 &&
+                      ` · ${bar.books.length} ${bar.books.length === 1 ? 'book' : 'books'}`}
                   </p>
+                  {bar.books.length > 0 && (
+                    <ul className="mt-2 flex flex-col gap-1 border-t border-border pt-2">
+                      {bar.books.map((book) => (
+                        <li key={book.bookId} className="flex items-baseline gap-3">
+                          <span className="min-w-0 flex-1 truncate text-ink">{book.title}</span>
+                          <span className="shrink-0 text-muted tabular-nums">
+                            {book.pages} pages · {formatDuration(book.minutes)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               );
             }}

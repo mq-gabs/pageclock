@@ -52,6 +52,8 @@ export const periodTotalsSchema = z.object({
   /** Pages per hour; null without reading time. */
   speed: z.number().nullable(),
   readingDays: z.int(),
+  /** Books with at least one completed session in the period. */
+  books: z.int(),
 });
 
 export const statsSummaryResponseSchema = z.object({
@@ -68,15 +70,25 @@ export const statsSummaryResponseSchema = z.object({
     minutes: z.int().nullable(),
     readingDays: z.int().nullable(),
     speed: z.int().nullable(),
+    books: z.int().nullable(),
   }),
 });
 export type StatsSummaryResponse = z.infer<typeof statsSummaryResponseSchema>;
+
+export const dailyBookStatSchema = z.object({
+  bookId: z.string(),
+  title: z.string(),
+  pages: z.int(),
+  minutes: z.number(),
+});
 
 export const dailyStatSchema = z.object({
   date: dateKey,
   pages: z.int(),
   minutes: z.number(),
   sessions: z.int(),
+  /** The books read that day, most pages first. */
+  books: z.array(dailyBookStatSchema),
 });
 
 export const statsDailyResponseSchema = z.object({ days: z.array(dailyStatSchema) });

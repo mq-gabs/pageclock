@@ -1,4 +1,4 @@
-import { and, gte, isNotNull, lt, type SQL } from 'drizzle-orm';
+import { and, gte, inArray, isNotNull, lt, type SQL } from 'drizzle-orm';
 import {
   addDays,
   daily,
@@ -17,7 +17,7 @@ import {
 } from '@reading-tracker/shared';
 import { config } from '../config';
 import type { Db } from '../db/client';
-import { readingSessions } from '../db/schema';
+import { books, readingSessions } from '../db/schema';
 import { toRecord } from './sessions';
 
 /**
@@ -61,7 +61,24 @@ export function getDaily(
   query: StatsDailyQuery,
   timeZone = config.appTimezone,
 ): StatsDailyResponse {
-  return { days: daily(completedSessions(db, query), { ...query, timeZone }) };
+  const days = daily(completedSessions(db, query), { ...query, timeZone });
+  const ids = [...new Set(days.flatMap((d) => d.books.map((b) => b.bookId)))];
+  const titles = new Map(
+    ids.length === 0
+      ? []
+      : db
+          .select({ id: books.id, title: books.title })
+          .from(books)
+          .where(inArray(books.id, ids))
+          .all()
+          .map((b) => [b.id, b.title]),
+  );
+  return {
+    days: days.map((d) => ({
+      ...d,
+      books: d.books.map((b) => ({ ...b, title: titles.get(b.bookId) ?? '' })),
+    })),
+  };
 }
 
 export function getStreaks(

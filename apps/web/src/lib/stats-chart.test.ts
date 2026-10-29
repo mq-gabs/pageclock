@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { chartBars, chartTicks } from './stats-chart';
 
-const day = (date: string, pages = 0, minutes = 0) => ({ date, pages, minutes, sessions: 0 });
+const book = (pages: number, minutes: number) => ({ bookId: 'b1', title: 'Dune', pages, minutes });
+const day = (date: string, pages = 0, minutes = 0) => ({
+  date,
+  pages,
+  minutes,
+  sessions: pages > 0 ? 1 : 0,
+  books: pages > 0 ? [book(pages, minutes)] : [],
+});
 const october = Array.from({ length: 31 }, (_, i) =>
   day(`2026-10-${String(i + 1).padStart(2, '0')}`, i === 19 ? 90 : 10, 20),
 );
@@ -34,6 +41,12 @@ describe('chartBars', () => {
       ['Sep', 100, false],
       ['Oct', 27 * 10 + 90, true],
     ]);
+    expect(bars[1]?.books).toEqual([book(27 * 10 + 90, 28 * 20)]);
+  });
+
+  it('passes each day’s books to its bar', () => {
+    const bars = chartBars('month', october, '2026-10-28');
+    expect(bars[19]?.books).toEqual([book(90, 20)]);
   });
 });
 

@@ -5,6 +5,8 @@ import { totals, type Totals } from './metrics';
 
 export interface PeriodTotals extends DateRange, Totals {
   readingDays: number;
+  /** Books with at least one completed session in the period. */
+  books: number;
 }
 
 export interface Summary {
@@ -19,6 +21,7 @@ export interface Summary {
     minutes: number | null;
     readingDays: number | null;
     speed: number | null;
+    books: number | null;
   };
 }
 
@@ -29,14 +32,16 @@ function periodTotals(
 ): PeriodTotals {
   const inRange: SessionRecord[] = [];
   const days = new Set<DateKey>();
+  const books = new Set<string>();
   for (const s of sessions) {
     if (!isCompleted(s)) continue;
     const day = toDateKey(s.startedAt, timeZone);
     if (day < range.from || day > range.to) continue;
     inRange.push(s);
     days.add(day);
+    books.add(s.bookId);
   }
-  return { ...range, ...totals(inRange), readingDays: days.size };
+  return { ...range, ...totals(inRange), readingDays: days.size, books: books.size };
 }
 
 function percentChange(current: number | null, previous: number | null): number | null {
@@ -77,6 +82,7 @@ export function summary(
       minutes: percentChange(current.minutes, previous.minutes),
       readingDays: percentChange(current.readingDays, previous.readingDays),
       speed: percentChange(current.speed, previous.speed),
+      books: percentChange(current.books, previous.books),
     },
   };
 }

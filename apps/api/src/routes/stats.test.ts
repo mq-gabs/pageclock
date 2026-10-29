@@ -54,12 +54,19 @@ describe('GET /api/stats/summary', () => {
       sessions: 11,
       speed: (253 / 420) * 60, // 36.1 p/h
       readingDays: 11,
+      books: 2, // Project Hail Mary and Thinking, Fast and Slow
     });
-    expect(s.previous).toMatchObject({ pages: 304, minutes: 430, sessions: 7, readingDays: 7 });
+    expect(s.previous).toMatchObject({
+      pages: 304,
+      minutes: 430,
+      sessions: 7,
+      readingDays: 7,
+      books: 1, // The Left Hand of Darkness
+    });
     expect(s.previous.speed).toBeCloseTo(42.42, 2);
     expect(s.daysSoFar).toBe(28);
     // −16.8%, −2.3%, +57.1%, −14.8%
-    expect(s.change).toEqual({ pages: -17, minutes: -2, readingDays: 57, speed: -15 });
+    expect(s.change).toEqual({ pages: -17, minutes: -2, readingDays: 57, speed: -15, books: 100 });
   });
 
   it('defaults to the period containing today', async () => {
@@ -67,9 +74,15 @@ describe('GET /api/stats/summary', () => {
       (await request(app).get('/api/stats/summary?period=week')).body,
     );
     // Mon Oct 26 – Sun Nov 1: Oct 26 (22/45) and Oct 27 (12/20).
-    expect(s.current).toMatchObject({ from: '2026-10-26', pages: 34, minutes: 65, readingDays: 2 });
-    // Oct 19, 22, 24, 25.
-    expect(s.previous).toMatchObject({ pages: 110, minutes: 160, readingDays: 4 });
+    expect(s.current).toMatchObject({
+      from: '2026-10-26',
+      pages: 34,
+      minutes: 65,
+      readingDays: 2,
+      books: 2, // Thinking on Oct 26, Project Hail Mary on Oct 27
+    });
+    // Oct 19, 22, 24, 25, all Project Hail Mary.
+    expect(s.previous).toMatchObject({ pages: 110, minutes: 160, readingDays: 4, books: 1 });
     expect(s.daysSoFar).toBe(3);
   });
 
@@ -107,12 +120,21 @@ describe('GET /api/stats/daily', () => {
   it('returns every local day in the range', async () => {
     const res = await request(app).get('/api/stats/daily?from=2026-10-24&to=2026-10-28');
     expect(res.status).toBe(200);
-    expect(statsDailyResponseSchema.parse(res.body).days).toEqual([
+    const { days } = statsDailyResponseSchema.parse(res.body);
+    expect(days.map(({ books: _, ...d }) => d)).toEqual([
       { date: '2026-10-24', pages: 24, minutes: 35, sessions: 1 },
       { date: '2026-10-25', pages: 14, minutes: 25, sessions: 1 },
       { date: '2026-10-26', pages: 22, minutes: 45, sessions: 1 },
       { date: '2026-10-27', pages: 12, minutes: 20, sessions: 1 },
       { date: '2026-10-28', pages: 0, minutes: 0, sessions: 0 },
+    ]);
+    // Each day lists its books with their titles.
+    expect(days.map((d) => d.books.map((b) => [b.title, b.pages, b.minutes]))).toEqual([
+      [['Project Hail Mary', 24, 35]],
+      [['Project Hail Mary', 14, 25]],
+      [['Thinking, Fast and Slow', 22, 45]],
+      [['Project Hail Mary', 12, 20]],
+      [],
     ]);
   });
 
