@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { bookStatusLabels } from '@reading-tracker/shared';
 import { Button } from '@/components/ui/button';
@@ -53,10 +53,6 @@ function BookScreen({ id, onLog }: { id: string; onLog: (sessionId?: string) => 
   const [editing, setEditing] = useState(false);
   const timer = useTimer();
   const start = useStartReading();
-  const title = data?.book.title;
-  useEffect(() => {
-    if (title) document.title = `${title} · Pageclock`;
-  }, [title]);
 
   const back = (
     <AppLink
@@ -99,6 +95,9 @@ function BookScreen({ id, onLog }: { id: string; onLog: (sessionId?: string) => 
 
   return (
     <main className="flex flex-col gap-4 px-5 pt-6 pb-5 lg:max-w-[960px] lg:gap-6 lg:px-12 lg:py-10">
+      {/* React hoists this into <head> ahead of the layout's "Book" title, so the tab shows the
+          book while it is loaded and falls back to "Book" otherwise. */}
+      <title>{`${book.title} · Pageclock`}</title>
       <div className="flex items-center justify-between">
         {back}
         <button
