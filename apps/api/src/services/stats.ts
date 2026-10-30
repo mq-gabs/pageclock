@@ -1,4 +1,4 @@
-import { and, gte, inArray, isNotNull, lt, type SQL } from 'drizzle-orm';
+import { and, eq, gte, inArray, isNotNull, lt, type SQL } from 'drizzle-orm';
 import {
   addDays,
   daily,
@@ -25,8 +25,15 @@ import { toRecord } from './sessions';
  * Rule 8: the grouping by local date happens in TypeScript; the SQL filter only narrows the
  * rows, with a day of margin on each side because local dates are within a day of UTC.
  */
-function completedSessions(db: Db, range?: { from: DateKey; to: DateKey }): SessionRecord[] {
-  const conditions: SQL[] = [isNotNull(readingSessions.endedAt)];
+function completedSessions(
+  db: Db,
+  userId: string,
+  range?: { from: DateKey; to: DateKey },
+): SessionRecord[] {
+  const conditions: SQL[] = [
+    eq(readingSessions.userId, userId),
+    isNotNull(readingSessions.endedAt),
+  ];
   if (range) {
     conditions.push(
       gte(readingSessions.startedAt, new Date(`${addDays(range.from, -1)}T00:00:00Z`)),
@@ -43,13 +50,14 @@ function completedSessions(db: Db, range?: { from: DateKey; to: DateKey }): Sess
 
 export function getSummary(
   db: Db,
+  userId: string,
   query: StatsSummaryQuery,
   now = new Date(),
   timeZone = config.appTimezone,
 ): StatsSummaryResponse {
   const today = toDateKey(now, timeZone);
   const date = query.date ?? today;
-  const sessions = completedSessions(db, {
+  const sessions = completedSessions(db, userId, {
     from: previousPeriodRange(query.period, date).from,
     to: periodRange(query.period, date).to,
   });
@@ -58,10 +66,11 @@ export function getSummary(
 
 export function getDaily(
   db: Db,
+  userId: string,
   query: StatsDailyQuery,
   timeZone = config.appTimezone,
 ): StatsDailyResponse {
-  const days = daily(completedSessions(db, query), { ...query, timeZone });
+  const days = daily(completedSessions(db, userId, query), { ...query, timeZone });
   const ids = [...new Set(days.flatMap((d) => d.books.map((b) => b.bookId)))];
   const titles = new Map(
     ids.length === 0
@@ -83,9 +92,10 @@ export function getDaily(
 
 export function getStreaks(
   db: Db,
+  userId: string,
   now = new Date(),
   timeZone = config.appTimezone,
 ): StatsStreaksResponse {
   const today = toDateKey(now, timeZone);
-  return { ...streaks(completedSessions(db), { today, timeZone }), today };
+  return { ...streaks(completedSessions(db, userId), { today, timeZone }), today };
 }

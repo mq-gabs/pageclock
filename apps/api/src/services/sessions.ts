@@ -60,17 +60,23 @@ export function toSession(row: ReadingSessionRow): Session {
   };
 }
 
-/** The book's sessions plus any session (of any book, running or not) overlapping the draft's time. */
-function relevantSessions(db: DbOrTx, draft: SessionDraft): SessionRecord[] {
+/**
+ * The book's sessions plus any of the user's sessions (of any book, running or not) overlapping
+ * the draft's time.
+ */
+function relevantSessions(db: DbOrTx, userId: string, draft: SessionDraft): SessionRecord[] {
   return db
     .select()
     .from(readingSessions)
     .where(
-      or(
-        eq(readingSessions.bookId, draft.bookId),
-        and(
-          lt(readingSessions.startedAt, draft.endedAt),
-          or(isNull(readingSessions.endedAt), gt(readingSessions.endedAt, draft.startedAt)),
+      and(
+        eq(readingSessions.userId, userId),
+        or(
+          eq(readingSessions.bookId, draft.bookId),
+          and(
+            lt(readingSessions.startedAt, draft.endedAt),
+            or(isNull(readingSessions.endedAt), gt(readingSessions.endedAt, draft.startedAt)),
+          ),
         ),
       ),
     )
@@ -78,14 +84,28 @@ function relevantSessions(db: DbOrTx, draft: SessionDraft): SessionRecord[] {
     .map(toRecord);
 }
 
-function runChecks(db: DbOrTx, draft: SessionDraft, now: Date): SessionCheckResponse {
-  const book = findBookRow(db, draft.bookId);
-  return checkSession(draft, relevantSessions(db, draft), { totalPages: book.totalPages, now });
+function runChecks(
+  db: DbOrTx,
+  userId: string,
+  draft: SessionDraft,
+  now: Date,
+): SessionCheckResponse {
+  const book = findBookRow(db, userId, draft.bookId);
+  return checkSession(draft, relevantSessions(db, userId, draft), {
+    totalPages: book.totalPages,
+    now,
+  });
 }
 
-export function checkDraft(db: Db, body: CheckSessionBody, now = new Date()): SessionCheckResponse {
+export function checkDraft(
+  db: Db,
+  userId: string,
+  body: CheckSessionBody,
+  now = new Date(),
+): SessionCheckResponse {
   return runChecks(
     db,
+    userId,
     { ...body, startedAt: new Date(body.startedAt), endedAt: new Date(body.endedAt) },
     now,
   );
@@ -97,12 +117,13 @@ export function checkDraft(db: Db, body: CheckSessionBody, now = new Date()): Se
  */
 export function saveSession(
   db: Db,
+  userId: string,
   draft: SessionDraft,
   options: { confirmWarnings?: boolean; now?: Date; write: (tx: DbOrTx) => ReadingSessionRow },
 ): SaveSessionResponse {
   const now = options.now ?? new Date();
   return db.transaction((tx) => {
-    const { errors, warnings } = runChecks(tx, draft, now);
+    const { errors, warnings } = runChecks(tx, userId, draft, now);
     if (errors.length > 0) {
       throw new HttpError(
         400,
@@ -114,13 +135,13 @@ export function saveSession(
     if (warnings.length > 0 && !options.confirmWarnings) throw new WarningsError(warnings);
 
     const row = options.write(tx);
-    const book = findBookRow(tx, draft.bookId);
+    const book = findBookRow(tx, userId, draft.bookId);
     tx.update(books)
       .set({ status: statusAfterSessionSaved(book.status), updatedAt: now })
       .where(eq(books.id, book.id))
       .run();
 
-    const updated = getBookWithProgress(tx, book.id);
+    const updated = getBookWithProgress(tx, userId, book.id);
     return {
       session: toSession(row),
       book: updated,
@@ -129,7 +150,7 @@ export function saveSession(
   });
 }
 
-export function createSession(db: Db, input: CreateSessionInput, now = new Date()) {
+export function createSession(db: Db, userId: string, input: CreateSessionInput, now = new Date()) {
   const draft: SessionDraft = {
     bookId: input.bookId,
     startedAt: new Date(input.startedAt),
@@ -137,26 +158,36 @@ export function createSession(db: Db, input: CreateSessionInput, now = new Date(
     startPage: input.startPage,
     endPage: input.endPage,
   };
-  return saveSession(db, draft, {
+  return saveSession(db, userId, draft, {
     confirmWarnings: input.confirmWarnings,
     now,
     write: (tx) =>
       tx
         .insert(readingSessions)
-        .values({ ...draft, source: 'manual' })
+        .values({ ...draft, userId, source: 'manual' })
         .returning()
         .get(),
   });
 }
 
-function findSessionRow(db: DbOrTx, id: string): ReadingSessionRow {
-  const row = db.select().from(readingSessions).where(eq(readingSessions.id, id)).get();
+function findSessionRow(db: DbOrTx, userId: string, id: string): ReadingSessionRow {
+  const row = db
+    .select()
+    .from(readingSessions)
+    .where(and(eq(readingSessions.id, id), eq(readingSessions.userId, userId)))
+    .get();
   if (!row) throw new HttpError(404, 'not_found', 'Session not found');
   return row;
 }
 
-export function updateSession(db: Db, id: string, input: UpdateSessionInput, now = new Date()) {
-  const row = findSessionRow(db, id);
+export function updateSession(
+  db: Db,
+  userId: string,
+  id: string,
+  input: UpdateSessionInput,
+  now = new Date(),
+) {
+  const row = findSessionRow(db, userId, id);
   if (row.endedAt === null || row.endPage === null) {
     throw new HttpError(409, 'session_running', 'Stop the timer before editing this session');
   }
@@ -169,7 +200,7 @@ export function updateSession(db: Db, id: string, input: UpdateSessionInput, now
     endPage: input.endPage ?? row.endPage,
     pausedSeconds: row.pausedSeconds,
   };
-  return saveSession(db, draft, {
+  return saveSession(db, userId, draft, {
     confirmWarnings: input.confirmWarnings,
     now,
     write: (tx) =>
@@ -188,18 +219,18 @@ export function updateSession(db: Db, id: string, input: UpdateSessionInput, now
   });
 }
 
-export function deleteSession(db: Db, id: string) {
+export function deleteSession(db: Db, userId: string, id: string) {
   const deleted = db
     .delete(readingSessions)
-    .where(eq(readingSessions.id, id))
+    .where(and(eq(readingSessions.id, id), eq(readingSessions.userId, userId)))
     .returning({ id: readingSessions.id })
     .get();
   if (!deleted) throw new HttpError(404, 'not_found', 'Session not found');
 }
 
 /** The book's sessions, newest first. */
-export function listBookSessions(db: Db, bookId: string): Session[] {
-  findBookRow(db, bookId);
+export function listBookSessions(db: Db, userId: string, bookId: string): Session[] {
+  findBookRow(db, userId, bookId);
   return db
     .select()
     .from(readingSessions)
@@ -210,8 +241,8 @@ export function listBookSessions(db: Db, bookId: string): Session[] {
 }
 
 /** Rule 1 for the book at `at`. */
-export function suggestedStartPage(db: Db, bookId: string, at: Date): number {
-  const book = findBookRow(db, bookId);
+export function suggestedStartPage(db: Db, userId: string, bookId: string, at: Date): number {
+  const book = findBookRow(db, userId, bookId);
   const sessions = db
     .select()
     .from(readingSessions)

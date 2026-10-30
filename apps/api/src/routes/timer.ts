@@ -6,6 +6,7 @@ import {
   type TimerResponse,
 } from '@reading-tracker/shared';
 import type { Db } from '../db/client';
+import { userIdOf } from '../middleware/auth';
 import { parseBody } from '../middleware/validate';
 import {
   getTimer,
@@ -19,33 +20,37 @@ import {
 export function timerRouter(db: Db) {
   const router = Router();
 
-  router.get('/', (_req, res) => {
-    const body: TimerResponse = { timer: getTimer(db) };
+  router.get('/', (req, res) => {
+    const body: TimerResponse = { timer: getTimer(db, userIdOf(req)) };
     res.json(body);
   });
 
   router.patch('/', (req, res) => {
-    const body: TimerResponse = { timer: updateTimer(db, parseBody(updateTimerSchema, req.body)) };
+    const body: TimerResponse = {
+      timer: updateTimer(db, userIdOf(req), parseBody(updateTimerSchema, req.body)),
+    };
     res.json(body);
   });
 
   router.post('/start', (req, res) => {
-    const body: TimerResponse = { timer: startTimer(db, parseBody(startTimerSchema, req.body)) };
+    const body: TimerResponse = {
+      timer: startTimer(db, userIdOf(req), parseBody(startTimerSchema, req.body)),
+    };
     res.status(201).json(body);
   });
 
-  router.post('/pause', (_req, res) => {
-    const body: TimerResponse = { timer: pauseTimer(db) };
+  router.post('/pause', (req, res) => {
+    const body: TimerResponse = { timer: pauseTimer(db, userIdOf(req)) };
     res.json(body);
   });
 
-  router.post('/resume', (_req, res) => {
-    const body: TimerResponse = { timer: resumeTimer(db) };
+  router.post('/resume', (req, res) => {
+    const body: TimerResponse = { timer: resumeTimer(db, userIdOf(req)) };
     res.json(body);
   });
 
   router.post('/stop', (req, res) => {
-    res.json(stopTimer(db, parseBody(stopTimerSchema, req.body)));
+    res.json(stopTimer(db, userIdOf(req), parseBody(stopTimerSchema, req.body)));
   });
 
   return router;

@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
-import { check, index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { bookLimits, bookStatuses, sessionSources } from '@reading-tracker/shared';
+import { check, index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { bookLimits, bookStatuses, sessionSources, userLimits } from '@reading-tracker/shared';
 
 const nowMs = sql`(cast(unixepoch('subsec') * 1000 as integer))`;
 
@@ -20,10 +20,54 @@ const id = text('id')
   .primaryKey()
   .$defaultFn(() => crypto.randomUUID());
 
+export const users = sqliteTable(
+  'users',
+  {
+    id,
+    name: text('name').notNull(),
+    /** Stored lowercase, so uniqueness is case-insensitive. */
+    nick: text('nick').notNull(),
+    /** `scrypt$<salt>$<hash>`, see `services/password.ts`. */
+    passwordHash: text('password_hash').notNull(),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex('users_nick_unique').on(t.nick),
+    check(
+      'users_name_length',
+      sql`length(${t.name}) between 1 and ${sql.raw(String(userLimits.nameMax))}`,
+    ),
+    check(
+      'users_nick_length',
+      sql`length(${t.nick}) between ${sql.raw(String(userLimits.nickMin))} and ${sql.raw(String(userLimits.nickMax))}`,
+    ),
+  ],
+);
+
+/** Bearer tokens. Only a SHA-256 of the token is stored, so a leaked database can't sign in. */
+export const authTokens = sqliteTable(
+  'auth_tokens',
+  {
+    tokenHash: text('token_hash').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+    createdAt: timestamps.createdAt,
+  },
+  (t) => [index('auth_tokens_user_id_idx').on(t.userId)],
+);
+
+const ownerId = () =>
+  text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' });
+
 export const books = sqliteTable(
   'books',
   {
     id,
+    userId: ownerId(),
     title: text('title').notNull(),
     author: text('author').notNull(),
     totalPages: integer('total_pages').notNull(),
@@ -32,6 +76,7 @@ export const books = sqliteTable(
     ...timestamps,
   },
   (t) => [
+    index('books_user_id_updated_at_idx').on(t.userId, t.updatedAt),
     check(
       'books_title_length',
       sql`length(${t.title}) between 1 and ${sql.raw(String(bookLimits.titleMax))}`,
@@ -52,6 +97,8 @@ export const readingSessions = sqliteTable(
   'reading_sessions',
   {
     id,
+    /** Same as the book's owner; kept here so timer, stats and overlap checks filter directly. */
+    userId: ownerId(),
     bookId: text('book_id')
       .notNull()
       .references(() => books.id, { onDelete: 'cascade' }),
@@ -65,7 +112,7 @@ export const readingSessions = sqliteTable(
     ...timestamps,
   },
   (t) => [
-    index('reading_sessions_started_at_idx').on(t.startedAt),
+    index('reading_sessions_user_id_started_at_idx').on(t.userId, t.startedAt),
     index('reading_sessions_book_id_started_at_idx').on(t.bookId, t.startedAt),
     check('reading_sessions_start_page_min', sql`${t.startPage} >= 1`),
     check('reading_sessions_paused_seconds_min', sql`${t.pausedSeconds} >= 0`),
@@ -73,6 +120,7 @@ export const readingSessions = sqliteTable(
   ],
 );
 
+export type UserRow = typeof users.$inferSelect;
 export type BookRow = typeof books.$inferSelect;
 export type NewBookRow = typeof books.$inferInsert;
 export type ReadingSessionRow = typeof readingSessions.$inferSelect;

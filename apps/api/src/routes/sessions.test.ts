@@ -1,4 +1,3 @@
-import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   apiErrorSchema,
@@ -13,10 +12,12 @@ import { createApp } from '../app';
 import type { Db } from '../db/client';
 import { readingSessions } from '../db/schema';
 import { seed } from '../db/seed';
+import { authedAgent } from '../test/auth';
 import { createTestDb } from '../test/db';
 
 let db: Db;
-let app: ReturnType<typeof createApp>;
+let api: ReturnType<typeof authedAgent>;
+let userId: string;
 const now = Date.now();
 const minutesAgo = (m: number) => new Date(now - m * 60_000).toISOString();
 // A slot earlier today with no seeded session in it.
@@ -25,17 +26,16 @@ const missingId = '00000000-0000-4000-8000-000000000000';
 
 beforeEach(() => {
   db = createTestDb();
-  seed(db, new Date(now), 'America/Fortaleza');
-  app = createApp({ db });
+  userId = seed(db, new Date(now), 'America/Fortaleza').userId;
+  api = authedAgent(createApp({ db }), db, userId);
 });
 
 async function bookId(title: string) {
-  const { books } = listBooksResponseSchema.parse((await request(app).get('/api/books')).body);
+  const { books } = listBooksResponseSchema.parse((await api.get('/api/books')).body);
   return books.find((b) => b.title === title)!.id;
 }
 const sessionsOf = async (id: string) =>
-  listSessionsResponseSchema.parse((await request(app).get(`/api/books/${id}/sessions`)).body)
-    .sessions;
+  listSessionsResponseSchema.parse((await api.get(`/api/books/${id}/sessions`)).body).sessions;
 const errorOf = (body: unknown) => apiErrorSchema.parse(body).error;
 
 describe('the milestone 5 flow: previous session ends on page 174', () => {
@@ -44,7 +44,7 @@ describe('the milestone 5 flow: previous session ends on page 174', () => {
     const body = { bookId: id, ...slot, startPage: 181, endPage: 200 };
 
     const check = sessionCheckResponseSchema.parse(
-      (await request(app).post('/api/reading-sessions/check').send(body)).body,
+      (await api.post('/api/reading-sessions/check').send(body)).body,
     );
     expect(check.errors).toEqual([]);
     expect(check.suggestedStartPage).toBe(175);
@@ -53,23 +53,21 @@ describe('the milestone 5 flow: previous session ends on page 174', () => {
     ]);
     expect(check.warnings[0]!.message).toContain('Pages 175–180 are skipped');
 
-    const conflict = await request(app).post('/api/reading-sessions').send(body);
+    const conflict = await api.post('/api/reading-sessions').send(body);
     expect(conflict.status).toBe(409);
     expect(sessionWarningsResponseSchema.parse(conflict.body).warnings[0]!.code).toBe(
       'page_gap_before',
     );
     expect(await sessionsOf(id)).toHaveLength(7); // nothing saved
 
-    const saved = await request(app)
-      .post('/api/reading-sessions')
-      .send({ ...body, confirmWarnings: true });
+    const saved = await api.post('/api/reading-sessions').send({ ...body, confirmWarnings: true });
     expect(saved.status).toBe(201);
     expect(saveSessionResponseSchema.parse(saved.body).book.progress).toBe(200);
   });
 
   it('saves without warnings when starting at the suggested page', async () => {
     const id = await bookId('Project Hail Mary');
-    const res = await request(app)
+    const res = await api
       .post('/api/reading-sessions')
       .send({ bookId: id, ...slot, startPage: 175, endPage: 190 });
     expect(res.status).toBe(201);
@@ -82,18 +80,18 @@ describe('the milestone 5 flow: previous session ends on page 174', () => {
 
   it('moves a want_to_read book to reading on its first session', async () => {
     const id = await bookId('Piranesi');
-    const res = await request(app)
+    const res = await api
       .post('/api/reading-sessions')
       .send({ bookId: id, ...slot, startPage: 1, endPage: 20 });
     expect(res.status).toBe(201);
     expect(saveSessionResponseSchema.parse(res.body).book.status).toBe('reading');
-    const { books } = listBooksResponseSchema.parse((await request(app).get('/api/books')).body);
+    const { books } = listBooksResponseSchema.parse((await api.get('/api/books')).body);
     expect(books[0]!.title).toBe('Piranesi'); // most recently updated first
   });
 
   it('offers to finish when the session reaches the last page', async () => {
     const id = await bookId('Project Hail Mary');
-    const res = await request(app)
+    const res = await api
       .post('/api/reading-sessions')
       .send({ bookId: id, ...slot, startPage: 175, endPage: 476 });
     const saved = saveSessionResponseSchema.parse(res.body);
@@ -128,7 +126,7 @@ describe('POST /api/reading-sessions: hard rules', () => {
     ['end page above the total', { ...slot, startPage: 175, endPage: 477 }, 'endPage'],
     ['start page below 1', { ...slot, startPage: 0, endPage: 10 }, 'startPage'],
   ])('rejects %s with 400', async (_name, fields, field) => {
-    const res = await request(app)
+    const res = await api
       .post('/api/reading-sessions')
       .send({ bookId: await bookId('Project Hail Mary'), ...fields });
     expect(res.status).toBe(400);
@@ -138,31 +136,29 @@ describe('POST /api/reading-sessions: hard rules', () => {
   });
 
   it('blocks hard errors even with confirmWarnings', async () => {
-    const res = await request(app)
-      .post('/api/reading-sessions')
-      .send({
-        bookId: await bookId('Project Hail Mary'),
-        ...slot,
-        startPage: 181,
-        endPage: 900,
-        confirmWarnings: true,
-      });
+    const res = await api.post('/api/reading-sessions').send({
+      bookId: await bookId('Project Hail Mary'),
+      ...slot,
+      startPage: 181,
+      endPage: 900,
+      confirmWarnings: true,
+    });
     expect(res.status).toBe(400);
   });
 
   it('rejects malformed bodies', async () => {
     const id = await bookId('Project Hail Mary');
-    expect((await request(app).post('/api/reading-sessions').send({})).status).toBe(400);
+    expect((await api.post('/api/reading-sessions').send({})).status).toBe(400);
     expect(
       (
-        await request(app)
+        await api
           .post('/api/reading-sessions')
           .send({ bookId: id, ...slot, startPage: 1.5, endPage: 10 })
       ).status,
     ).toBe(400);
     expect(
       (
-        await request(app)
+        await api
           .post('/api/reading-sessions')
           .send({ bookId: id, startedAt: 'today', endedAt: slot.endedAt, startPage: 1, endPage: 1 })
       ).status,
@@ -170,7 +166,7 @@ describe('POST /api/reading-sessions: hard rules', () => {
   });
 
   it('returns 404 for an unknown book', async () => {
-    const res = await request(app)
+    const res = await api
       .post('/api/reading-sessions')
       .send({ bookId: missingId, ...slot, startPage: 1, endPage: 10 });
     expect(res.status).toBe(404);
@@ -180,7 +176,7 @@ describe('POST /api/reading-sessions: hard rules', () => {
 describe('POST /api/reading-sessions/check', () => {
   it('reports errors without saving', async () => {
     const id = await bookId('Project Hail Mary');
-    const res = await request(app)
+    const res = await api
       .post('/api/reading-sessions/check')
       .send({ bookId: id, ...slot, startPage: 175, endPage: 900 });
     expect(res.status).toBe(200);
@@ -193,15 +189,13 @@ describe('POST /api/reading-sessions/check', () => {
   it('warns about a time overlap with another book', async () => {
     const thinking = await sessionsOf(await bookId('Thinking, Fast and Slow'));
     const latest = thinking[0]!; // newest first
-    const res = await request(app)
-      .post('/api/reading-sessions/check')
-      .send({
-        bookId: await bookId('Piranesi'),
-        startedAt: latest.startedAt,
-        endedAt: latest.endedAt,
-        startPage: 1,
-        endPage: 10,
-      });
+    const res = await api.post('/api/reading-sessions/check').send({
+      bookId: await bookId('Piranesi'),
+      startedAt: latest.startedAt,
+      endedAt: latest.endedAt,
+      startPage: 1,
+      endPage: 10,
+    });
     const { warnings } = sessionCheckResponseSchema.parse(res.body);
     expect(warnings).toEqual([
       expect.objectContaining({ code: 'time_overlap', sessionId: latest.id }),
@@ -211,7 +205,7 @@ describe('POST /api/reading-sessions/check', () => {
   it('ignores the session being edited', async () => {
     const id = await bookId('Project Hail Mary');
     const [latest] = await sessionsOf(id);
-    const res = await request(app).post('/api/reading-sessions/check').send({
+    const res = await api.post('/api/reading-sessions/check').send({
       id: latest!.id,
       bookId: id,
       startedAt: latest!.startedAt,
@@ -227,9 +221,7 @@ describe('POST /api/reading-sessions/check', () => {
   });
 
   it('rejects a malformed body', async () => {
-    expect(
-      (await request(app).post('/api/reading-sessions/check').send({ bookId: 'x' })).status,
-    ).toBe(400);
+    expect((await api.post('/api/reading-sessions/check').send({ bookId: 'x' })).status).toBe(400);
   });
 });
 
@@ -237,9 +229,7 @@ describe('PATCH /api/reading-sessions/:id', () => {
   it('edits a session', async () => {
     const id = await bookId('Project Hail Mary');
     const [latest] = await sessionsOf(id);
-    const res = await request(app)
-      .patch(`/api/reading-sessions/${latest!.id}`)
-      .send({ endPage: 180 });
+    const res = await api.patch(`/api/reading-sessions/${latest!.id}`).send({ endPage: 180 });
     expect(res.status).toBe(200);
     expect(saveSessionResponseSchema.parse(res.body)).toMatchObject({
       session: { endPage: 180 },
@@ -251,14 +241,14 @@ describe('PATCH /api/reading-sessions/:id', () => {
     const id = await bookId('Project Hail Mary');
     const sessions = await sessionsOf(id);
     const middle = sessions[3]!;
-    const conflict = await request(app)
+    const conflict = await api
       .patch(`/api/reading-sessions/${middle.id}`)
       .send({ endPage: middle.endPage! - 5 });
     expect(conflict.status).toBe(409);
     expect(sessionWarningsResponseSchema.parse(conflict.body).warnings[0]!.code).toBe(
       'page_gap_after',
     );
-    const ok = await request(app)
+    const ok = await api
       .patch(`/api/reading-sessions/${middle.id}`)
       .send({ endPage: middle.endPage! - 5, confirmWarnings: true });
     expect(ok.status).toBe(200);
@@ -266,9 +256,7 @@ describe('PATCH /api/reading-sessions/:id', () => {
 
   it('applies the hard rules to the merged session', async () => {
     const [latest] = await sessionsOf(await bookId('Project Hail Mary'));
-    const res = await request(app)
-      .patch(`/api/reading-sessions/${latest!.id}`)
-      .send({ startPage: 200 });
+    const res = await api.patch(`/api/reading-sessions/${latest!.id}`).send({ startPage: 200 });
     expect(res.status).toBe(400);
     expect(errorOf(res.body).fields?.endPage).toBeDefined();
   });
@@ -277,6 +265,7 @@ describe('PATCH /api/reading-sessions/:id', () => {
     const row = db
       .insert(readingSessions)
       .values({
+        userId,
         bookId: await bookId('Piranesi'),
         startedAt: new Date(now - 60_000),
         startPage: 1,
@@ -284,22 +273,19 @@ describe('PATCH /api/reading-sessions/:id', () => {
       })
       .returning()
       .get();
-    const res = await request(app).patch(`/api/reading-sessions/${row.id}`).send({ startPage: 1 });
+    const res = await api.patch(`/api/reading-sessions/${row.id}`).send({ startPage: 1 });
     expect(res.status).toBe(409);
     expect(errorOf(res.body).code).toBe('session_running');
   });
 
   it('returns 404 / 400 for unknown or malformed ids and bodies', async () => {
     expect(
-      (await request(app).patch(`/api/reading-sessions/${missingId}`).send({ endPage: 1 })).status,
+      (await api.patch(`/api/reading-sessions/${missingId}`).send({ endPage: 1 })).status,
     ).toBe(404);
-    expect(
-      (await request(app).patch('/api/reading-sessions/nope').send({ endPage: 1 })).status,
-    ).toBe(400);
+    expect((await api.patch('/api/reading-sessions/nope').send({ endPage: 1 })).status).toBe(400);
     const [latest] = await sessionsOf(await bookId('Project Hail Mary'));
     expect(
-      (await request(app).patch(`/api/reading-sessions/${latest!.id}`).send({ endPage: 'ten' }))
-        .status,
+      (await api.patch(`/api/reading-sessions/${latest!.id}`).send({ endPage: 'ten' })).status,
     ).toBe(400);
   });
 });
@@ -308,14 +294,14 @@ describe('DELETE /api/reading-sessions/:id', () => {
   it('deletes a session and lowers the progress', async () => {
     const id = await bookId('Project Hail Mary');
     const [latest] = await sessionsOf(id);
-    expect((await request(app).delete(`/api/reading-sessions/${latest!.id}`)).status).toBe(204);
-    const { book } = bookDetailSchema.parse((await request(app).get(`/api/books/${id}`)).body);
+    expect((await api.delete(`/api/reading-sessions/${latest!.id}`)).status).toBe(204);
+    const { book } = bookDetailSchema.parse((await api.get(`/api/books/${id}`)).body);
     expect(book.progress).toBe(162);
   });
 
   it('returns 404 / 400 for unknown or malformed ids', async () => {
-    expect((await request(app).delete(`/api/reading-sessions/${missingId}`)).status).toBe(404);
-    expect((await request(app).delete('/api/reading-sessions/nope')).status).toBe(400);
+    expect((await api.delete(`/api/reading-sessions/${missingId}`)).status).toBe(404);
+    expect((await api.delete('/api/reading-sessions/nope')).status).toBe(400);
   });
 });
 
@@ -334,29 +320,25 @@ describe('GET /api/books/:id/sessions', () => {
 
   it('is empty for a book without sessions and 404 for an unknown book', async () => {
     expect(await sessionsOf(await bookId('Piranesi'))).toEqual([]);
-    expect((await request(app).get(`/api/books/${missingId}/sessions`)).status).toBe(404);
+    expect((await api.get(`/api/books/${missingId}/sessions`)).status).toBe(404);
   });
 });
 
 describe('GET /api/books/:id/suggested-start-page', () => {
   it('uses the latest session before `at`, defaulting to now', async () => {
     const id = await bookId('Project Hail Mary');
-    expect((await request(app).get(`/api/books/${id}/suggested-start-page`)).body).toEqual({
+    expect((await api.get(`/api/books/${id}/suggested-start-page`)).body).toEqual({
       startPage: 175,
     });
     const longAgo = new Date(now - 60 * 86_400_000).toISOString();
-    expect(
-      (await request(app).get(`/api/books/${id}/suggested-start-page?at=${longAgo}`)).body,
-    ).toEqual({ startPage: 1 });
+    expect((await api.get(`/api/books/${id}/suggested-start-page?at=${longAgo}`)).body).toEqual({
+      startPage: 1,
+    });
   });
 
   it('rejects a malformed `at` and an unknown book', async () => {
     const id = await bookId('Project Hail Mary');
-    expect(
-      (await request(app).get(`/api/books/${id}/suggested-start-page?at=yesterday`)).status,
-    ).toBe(400);
-    expect((await request(app).get(`/api/books/${missingId}/suggested-start-page`)).status).toBe(
-      404,
-    );
+    expect((await api.get(`/api/books/${id}/suggested-start-page?at=yesterday`)).status).toBe(400);
+    expect((await api.get(`/api/books/${missingId}/suggested-start-page`)).status).toBe(404);
   });
 });

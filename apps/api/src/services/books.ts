@@ -1,4 +1,4 @@
-import { asc, desc, eq, inArray, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, or, sql, type SQL } from 'drizzle-orm';
 import {
   bookProgress,
   progressPercent,
@@ -64,11 +64,11 @@ function searchCondition(q: string | undefined): SQL | undefined {
   );
 }
 
-export function listBooks(db: Db, query: ListBooksQuery): ListBooksResponse {
+export function listBooks(db: Db, userId: string, query: ListBooksQuery): ListBooksResponse {
   const matching = db
     .select()
     .from(books)
-    .where(searchCondition(query.q))
+    .where(and(eq(books.userId, userId), searchCondition(query.q)))
     .orderBy(desc(books.updatedAt), asc(books.title))
     .all();
 
@@ -83,18 +83,23 @@ export function listBooks(db: Db, query: ListBooksQuery): ListBooksResponse {
   return { books: listed.map((row) => withProgress(row, endPages.get(row.id) ?? [])), counts };
 }
 
-export function findBookRow(db: DbOrTx, id: string): BookRow {
-  const row = db.select().from(books).where(eq(books.id, id)).get();
+/** The user's book; another user's book is a 404 like a missing one. */
+export function findBookRow(db: DbOrTx, userId: string, id: string): BookRow {
+  const row = db
+    .select()
+    .from(books)
+    .where(and(eq(books.id, id), eq(books.userId, userId)))
+    .get();
   if (!row) throw new HttpError(404, 'not_found', 'Book not found');
   return row;
 }
 
-export function getBookWithProgress(db: DbOrTx, id: string): BookWithProgress {
-  return withProgress(findBookRow(db, id), endPagesByBook(db, [id]).get(id) ?? []);
+export function getBookWithProgress(db: DbOrTx, userId: string, id: string): BookWithProgress {
+  return withProgress(findBookRow(db, userId, id), endPagesByBook(db, [id]).get(id) ?? []);
 }
 
-export function getBook(db: Db, id: string): BookDetail {
-  const row = findBookRow(db, id);
+export function getBook(db: Db, userId: string, id: string): BookDetail {
+  const row = findBookRow(db, userId, id);
   const sessions = db
     .select()
     .from(readingSessions)
@@ -121,14 +126,24 @@ export function getBook(db: Db, id: string): BookDetail {
   };
 }
 
-export function createBook(db: Db, input: CreateBookInput): BookWithProgress {
-  const row = db.insert(books).values(input).returning().get();
+export function createBook(db: Db, userId: string, input: CreateBookInput): BookWithProgress {
+  const row = db
+    .insert(books)
+    .values({ ...input, userId })
+    .returning()
+    .get();
   return withProgress(row, []);
 }
 
-export function updateBook(db: Db, id: string, input: UpdateBookInput, now = new Date()) {
+export function updateBook(
+  db: Db,
+  userId: string,
+  id: string,
+  input: UpdateBookInput,
+  now = new Date(),
+) {
   return db.transaction((tx) => {
-    const row = findBookRow(tx, id);
+    const row = findBookRow(tx, userId, id);
     const endPages = endPagesByBook(tx, [id]).get(id) ?? [];
     const progress = bookProgress(endPages.map((endPage) => ({ endPage })));
 
@@ -152,7 +167,11 @@ export function updateBook(db: Db, id: string, input: UpdateBookInput, now = new
   });
 }
 
-export function deleteBook(db: Db, id: string) {
-  const deleted = db.delete(books).where(eq(books.id, id)).returning({ id: books.id }).get();
+export function deleteBook(db: Db, userId: string, id: string) {
+  const deleted = db
+    .delete(books)
+    .where(and(eq(books.id, id), eq(books.userId, userId)))
+    .returning({ id: books.id })
+    .get();
   if (!deleted) throw new HttpError(404, 'not_found', 'Book not found');
 }

@@ -1,7 +1,11 @@
 'use client';
 
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { BookOpen, ChartColumn, Timer, type LucideIcon } from 'lucide-react';
+import { BookOpen, ChartColumn, Settings, Timer, type LucideIcon } from 'lucide-react';
+import { isPublicRoute, safeNext, signInHref } from '@/lib/auth-routes';
+import { useAuthToken } from '@/lib/auth-token';
+import { useAppRouter } from '@/lib/navigation-progress';
 import { cn } from '@/lib/utils';
 import { NowReadingCard } from './now-reading-card';
 import { AppLink } from './app-link';
@@ -24,6 +28,12 @@ const navItems: NavItem[] = [
   },
   { href: '/read', label: 'Read', icon: Timer, matches: (p) => p.startsWith('/read') },
   { href: '/stats', label: 'Stats', icon: ChartColumn, matches: (p) => p.startsWith('/stats') },
+  {
+    href: '/settings',
+    label: 'Settings',
+    icon: Settings,
+    matches: (p) => p.startsWith('/settings'),
+  },
 ];
 
 /** Figma "Sidebar" (from 1024 px), with the "Now reading" card at the bottom. */
@@ -89,8 +99,44 @@ function BottomNav({ path }: { path: string }) {
   );
 }
 
+/**
+ * Signed-out users only see the sign-in and create-account pages; signed-in users only the app.
+ * The token lives in the browser, so the server renders a blank page and the client decides.
+ */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  const token = useAuthToken();
+  const router = useAppRouter();
+  const isPublic = isPublicRoute(path);
+  const redirect =
+    token === undefined ? null : isPublic && token ? 'app' : !isPublic && !token ? 'sign-in' : null;
+
+  useEffect(() => {
+    if (redirect === 'app') {
+      router.replace(safeNext(new URLSearchParams(window.location.search).get('next')));
+    } else if (redirect === 'sign-in') {
+      router.replace(signInHref(window.location.pathname + window.location.search));
+    }
+  }, [redirect, router]);
+
+  if (token === undefined || redirect) {
+    return (
+      <>
+        <NavigationProgress />
+        <div className="min-h-screen bg-bg" />
+      </>
+    );
+  }
+
+  if (isPublic) {
+    return (
+      <>
+        <NavigationProgress />
+        {children}
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen lg:flex">
       <NavigationProgress />

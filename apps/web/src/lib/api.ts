@@ -4,6 +4,7 @@ import {
   type ApiWarning,
 } from '@reading-tracker/shared';
 import type { z } from 'zod';
+import { clearToken, getToken } from './auth-token';
 
 /** A non-2xx response, carrying the API's `{ error: { code, message, fields } }` body. */
 export class ApiRequestError extends Error {
@@ -24,14 +25,18 @@ export class ApiWarningsError extends Error {
   }
 }
 
-type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
+type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 async function send(method: Method, path: string, body?: unknown): Promise<Response> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (token) headers.Authorization = `Bearer ${token}`;
   let res: Response;
   try {
     res = await fetch(path, {
       method,
-      headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      headers,
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
@@ -43,6 +48,9 @@ async function send(method: Method, path: string, body?: unknown): Promise<Respo
     );
   }
   if (res.ok) return res;
+  // The token expired or was revoked: forget it, and the app goes back to sign in. Only when
+  // this token was the one refused, so a wrong password at sign-in doesn't sign anyone out.
+  if (res.status === 401 && token && getToken() === token) clearToken();
 
   const json: unknown = await res.json().catch(() => null);
   if (res.status === 409) {
@@ -74,6 +82,6 @@ export async function api<S extends z.ZodType>(
 }
 
 /** Calls an endpoint that answers 204 No Content. */
-export async function apiNoContent(method: Method, path: string): Promise<void> {
-  await send(method, path);
+export async function apiNoContent(method: Method, path: string, body?: unknown): Promise<void> {
+  await send(method, path, body);
 }

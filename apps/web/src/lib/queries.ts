@@ -2,10 +2,12 @@
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  authResponseSchema,
   bookDetailSchema,
   bookWithProgressSchema,
   listBooksResponseSchema,
   listSessionsResponseSchema,
+  meResponseSchema,
   saveSessionResponseSchema,
   sessionCheckResponseSchema,
   statsDailyResponseSchema,
@@ -13,19 +15,26 @@ import {
   statsSummaryResponseSchema,
   suggestedStartPageResponseSchema,
   timerResponseSchema,
+  type AuthResponse,
+  type ChangePasswordInput,
   type CheckSessionBody,
   type CreateBookInput,
   type CreateSessionInput,
   type ListBooksQuery,
+  type MeResponse,
+  type SignInInput,
+  type SignUpInput,
   type StartTimerInput,
   type StatsPeriod,
   type StopTimerInput,
   type TimerResponse,
   type UpdateBookInput,
+  type UpdateProfileInput,
   type UpdateSessionInput,
   type UpdateTimerInput,
 } from '@reading-tracker/shared';
 import { api, apiNoContent } from './api';
+import { clearToken, setToken } from './auth-token';
 
 export const bookKeys = {
   all: ['books'] as const,
@@ -220,3 +229,62 @@ export function useStreaks() {
     queryFn: () => api('GET', '/api/stats/streaks', statsStreaksResponseSchema),
   });
 }
+
+export const meKey = ['me'] as const;
+
+/** The signed-in user. */
+export function useMe() {
+  return useQuery({
+    queryKey: meKey,
+    queryFn: () => api('GET', '/api/me', meResponseSchema),
+    select: (data) => data.user,
+  });
+}
+
+/** Sign in or create an account: drop anything cached for a previous user, then keep the token. */
+function useStartSession<V>(mutationFn: (variables: V) => Promise<AuthResponse>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: ({ token, user }) => {
+      queryClient.clear();
+      setToken(token);
+      queryClient.setQueryData<MeResponse>(meKey, { user });
+    },
+  });
+}
+
+export const useSignIn = () =>
+  useStartSession((input: SignInInput) =>
+    api('POST', '/api/auth/sign-in', authResponseSchema, input),
+  );
+
+export const useSignUp = () =>
+  useStartSession((input: SignUpInput) =>
+    api('POST', '/api/auth/sign-up', authResponseSchema, input),
+  );
+
+/** Ends the token on the server (best effort) and forgets it here. */
+export function useSignOut() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiNoContent('POST', '/api/auth/sign-out').catch(() => undefined),
+    onSettled: () => {
+      clearToken();
+      queryClient.clear();
+    },
+  });
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UpdateProfileInput) => api('PATCH', '/api/me', meResponseSchema, input),
+    onSuccess: (data) => queryClient.setQueryData(meKey, data),
+  });
+}
+
+export const useChangePassword = () =>
+  useMutation({
+    mutationFn: (input: ChangePasswordInput) => apiNoContent('PUT', '/api/me/password', input),
+  });

@@ -1,4 +1,3 @@
-import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   apiErrorSchema,
@@ -10,6 +9,7 @@ import {
 import { createApp } from '../app';
 import type { Db } from '../db/client';
 import { seed } from '../db/seed';
+import { authedAgent, createTestUser } from '../test/auth';
 import { createTestDb } from '../test/db';
 
 /**
@@ -25,13 +25,14 @@ import { createTestDb } from '../test/db';
 const now = new Date('2026-10-28T15:00:00Z');
 
 let db: Db;
-let app: ReturnType<typeof createApp>;
+let api: ReturnType<typeof authedAgent>;
+let userId: string;
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'], now });
   db = createTestDb();
-  seed(db, now, 'America/Fortaleza');
-  app = createApp({ db });
+  userId = seed(db, now, 'America/Fortaleza').userId;
+  api = authedAgent(createApp({ db }), db, userId);
 });
 
 afterEach(() => {
@@ -42,7 +43,7 @@ const errorOf = (body: unknown) => apiErrorSchema.parse(body).error;
 
 describe('GET /api/stats/summary', () => {
   it('matches the hand-computed October against September', async () => {
-    const res = await request(app).get('/api/stats/summary?period=month&date=2026-10-15');
+    const res = await api.get('/api/stats/summary?period=month&date=2026-10-15');
     expect(res.status).toBe(200);
     const s = statsSummaryResponseSchema.parse(res.body);
     expect(s.today).toBe('2026-10-28');
@@ -71,7 +72,7 @@ describe('GET /api/stats/summary', () => {
 
   it('defaults to the period containing today', async () => {
     const s = statsSummaryResponseSchema.parse(
-      (await request(app).get('/api/stats/summary?period=week')).body,
+      (await api.get('/api/stats/summary?period=week')).body,
     );
     // Mon Oct 26 – Sun Nov 1: Oct 26 (22/45) and Oct 27 (12/20).
     expect(s.current).toMatchObject({
@@ -88,29 +89,29 @@ describe('GET /api/stats/summary', () => {
 
   it('counts every day of a past period', async () => {
     const s = statsSummaryResponseSchema.parse(
-      (await request(app).get('/api/stats/summary?period=month&date=2026-09-01')).body,
+      (await api.get('/api/stats/summary?period=month&date=2026-09-01')).body,
     );
     expect(s.current).toMatchObject({ pages: 304, readingDays: 7 });
     expect(s.daysSoFar).toBe(30);
   });
 
   it('ignores a running timer', async () => {
-    const { books } = listBooksResponseSchema.parse((await request(app).get('/api/books')).body);
+    const { books } = listBooksResponseSchema.parse((await api.get('/api/books')).body);
     const id = books.find((b) => b.title === 'Project Hail Mary')!.id;
-    await request(app).post('/api/timer/start').send({ bookId: id }).expect(201);
+    await api.post('/api/timer/start').send({ bookId: id }).expect(201);
     vi.setSystemTime(now.getTime() + 30 * 60_000);
     const s = statsSummaryResponseSchema.parse(
-      (await request(app).get('/api/stats/summary?period=month')).body,
+      (await api.get('/api/stats/summary?period=month')).body,
     );
     expect(s.current).toMatchObject({ pages: 253, minutes: 420, sessions: 11 });
   });
 
   it('rejects a missing or unknown period and a bad date', async () => {
-    const missing = await request(app).get('/api/stats/summary');
+    const missing = await api.get('/api/stats/summary');
     expect(missing.status).toBe(400);
     expect(errorOf(missing.body).fields?.period).toBeDefined();
-    expect((await request(app).get('/api/stats/summary?period=day')).status).toBe(400);
-    const bad = await request(app).get('/api/stats/summary?period=month&date=2026-02-30');
+    expect((await api.get('/api/stats/summary?period=day')).status).toBe(400);
+    const bad = await api.get('/api/stats/summary?period=month&date=2026-02-30');
     expect(bad.status).toBe(400);
     expect(errorOf(bad.body).fields?.date).toEqual(['Not a real calendar date']);
   });
@@ -118,7 +119,7 @@ describe('GET /api/stats/summary', () => {
 
 describe('GET /api/stats/daily', () => {
   it('returns every local day in the range', async () => {
-    const res = await request(app).get('/api/stats/daily?from=2026-10-24&to=2026-10-28');
+    const res = await api.get('/api/stats/daily?from=2026-10-24&to=2026-10-28');
     expect(res.status).toBe(200);
     const { days } = statsDailyResponseSchema.parse(res.body);
     expect(days.map(({ books: _, ...d }) => d)).toEqual([
@@ -140,14 +141,14 @@ describe('GET /api/stats/daily', () => {
 
   it('counts a session that crosses midnight on its start date', async () => {
     const { days } = statsDailyResponseSchema.parse(
-      (await request(app).get('/api/stats/daily?from=2026-09-25&to=2026-09-26')).body,
+      (await api.get('/api/stats/daily?from=2026-09-25&to=2026-09-26')).body,
     );
     expect(days.map((d) => d.pages)).toEqual([28, 0]); // 23:40 → 00:20
   });
 
   it('adds up to the month summary', async () => {
     const { days } = statsDailyResponseSchema.parse(
-      (await request(app).get('/api/stats/daily?from=2026-10-01&to=2026-10-31')).body,
+      (await api.get('/api/stats/daily?from=2026-10-01&to=2026-10-31')).body,
     );
     expect(days).toHaveLength(31);
     expect(days.reduce((sum, d) => sum + d.pages, 0)).toBe(253);
@@ -155,21 +156,19 @@ describe('GET /api/stats/daily', () => {
   });
 
   it('validates the range', async () => {
-    expect((await request(app).get('/api/stats/daily?from=2026-10-01')).status).toBe(400);
-    const reversed = await request(app).get('/api/stats/daily?from=2026-10-05&to=2026-10-01');
+    expect((await api.get('/api/stats/daily?from=2026-10-01')).status).toBe(400);
+    const reversed = await api.get('/api/stats/daily?from=2026-10-05&to=2026-10-01');
     expect(reversed.status).toBe(400);
     expect(errorOf(reversed.body).fields?.to).toBeDefined();
-    const long = await request(app).get('/api/stats/daily?from=2025-01-01&to=2026-01-02');
+    const long = await api.get('/api/stats/daily?from=2025-01-01&to=2026-01-02');
     expect(long.status).toBe(400);
-    expect((await request(app).get('/api/stats/daily?from=2024-01-01&to=2024-12-31')).status).toBe(
-      200,
-    );
+    expect((await api.get('/api/stats/daily?from=2024-01-01&to=2024-12-31')).status).toBe(200);
   });
 });
 
 describe('GET /api/stats/streaks', () => {
   it('finds the current run (Oct 24–27) and the longest', async () => {
-    const res = await request(app).get('/api/stats/streaks');
+    const res = await api.get('/api/stats/streaks');
     expect(res.status).toBe(200);
     expect(statsStreaksResponseSchema.parse(res.body)).toEqual({
       today: '2026-10-28',
@@ -184,9 +183,9 @@ describe('GET /api/stats/streaks', () => {
 
   it('is empty without sessions', async () => {
     db = createTestDb();
-    app = createApp({ db });
+    api = authedAgent(createApp({ db }), db, createTestUser(db).id);
     expect(
-      statsStreaksResponseSchema.parse((await request(app).get('/api/stats/streaks')).body),
+      statsStreaksResponseSchema.parse((await api.get('/api/stats/streaks')).body),
     ).toMatchObject({ current: 0, longest: 0, currentSince: null, lastReadingDay: null });
   });
 });

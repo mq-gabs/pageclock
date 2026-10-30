@@ -5,8 +5,19 @@ import { createInsertSchema } from 'drizzle-zod';
 import { bookLimits, type BookStatus } from '@reading-tracker/shared';
 import { config } from '../config';
 import { logger } from '../logger';
+import { hashPasswordSync } from '../services/password';
 import { createDb, type Db } from './client';
-import { books, readingSessions, type NewBookRow, type NewReadingSessionRow } from './schema';
+import {
+  authTokens,
+  books,
+  readingSessions,
+  users,
+  type NewBookRow,
+  type NewReadingSessionRow,
+} from './schema';
+
+/** The account that owns the demo library. */
+export const demoUser = { name: 'Demo Reader', nick: 'demo', password: 'pageclock' } as const;
 
 /** One logged session: local start ("N days ago at HH:mm" in APP_TIMEZONE), length and pages read. */
 type DemoSession = [daysAgo: number, localTime: string, minutes: number, pages: number];
@@ -95,8 +106,9 @@ function localStart(now: Date, daysAgo: number, localTime: string, timeZone: str
   return new Date(set(day, { hours, minutes, seconds: 0, milliseconds: 0 }).getTime());
 }
 
-/** Replaces all data with the demo library. Dates are relative to `now`. */
+/** Replaces all data (every account too) with the demo user and library. Dates are relative to `now`. */
 export function seed(db: Db, now = new Date(), timeZone = config.appTimezone) {
+  const userId = crypto.randomUUID();
   const bookRows: NewBookRow[] = [];
   const sessionRows: NewReadingSessionRow[] = [];
 
@@ -110,6 +122,7 @@ export function seed(db: Db, now = new Date(), timeZone = config.appTimezone) {
       const endedAt = addMinutes(startedAt, minutes);
       sessionRows.push(
         insertSessionSchema.parse({
+          userId,
           bookId,
           startedAt,
           endedAt,
@@ -135,6 +148,7 @@ export function seed(db: Db, now = new Date(), timeZone = config.appTimezone) {
     bookRows.push(
       insertBookSchema.parse({
         id: bookId,
+        userId,
         title: demo.title,
         author: demo.author,
         totalPages: demo.totalPages,
@@ -146,19 +160,28 @@ export function seed(db: Db, now = new Date(), timeZone = config.appTimezone) {
     );
   }
 
+  const passwordHash = hashPasswordSync(demoUser.password);
   db.transaction((tx) => {
     tx.delete(readingSessions).run();
     tx.delete(books).run();
+    tx.delete(authTokens).run();
+    tx.delete(users).run();
+    tx.insert(users)
+      .values({ id: userId, name: demoUser.name, nick: demoUser.nick, passwordHash })
+      .run();
     tx.insert(books).values(bookRows).run();
     tx.insert(readingSessions).values(sessionRows).run();
   });
 
-  return { books: bookRows.length, sessions: sessionRows.length };
+  return { userId, books: bookRows.length, sessions: sessionRows.length };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const db = createDb();
   const counts = seed(db);
-  logger.info(counts, `Seeded ${config.databaseUrl}`);
+  logger.info(
+    counts,
+    `Seeded ${config.databaseUrl}; sign in as "${demoUser.nick}" / "${demoUser.password}"`,
+  );
   db.$client.close();
 }

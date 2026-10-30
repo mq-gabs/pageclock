@@ -31,15 +31,15 @@ git clone <repository-url> reading-tracker
 cd reading-tracker
 pnpm install
 pnpm api:db-migrate   # creates apps/api/data/reading-tracker.db
-pnpm api:db-seed      # optional: five demo books with sessions from the last 40 days
+pnpm api:db-seed      # optional: a demo account with five books and 40 days of sessions
 pnpm dev
 ```
 
-Open <http://localhost:3000>. The API listens on <http://localhost:3333/api>. The web app forwards `/api/*` to it, so the browser only ever talks to port 3000.
+Open <http://localhost:3000> and create an account, or sign in to the demo account (nick `demo`, password `pageclock`) if you seeded. The API listens on <http://localhost:3333/api>. The web app forwards `/api/*` to it, so the browser only ever talks to port 3000.
 
 Stop both apps with `Ctrl+C`.
 
-> `db-seed` **wipes the database** and loads the demo library, with dates relative to today. Skip it to start empty.
+> `db-seed` **wipes the database** (every account too) and loads the demo account and library, with dates relative to today. Skip it to start empty.
 
 ## Everyday commands
 

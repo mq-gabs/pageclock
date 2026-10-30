@@ -2,8 +2,9 @@ import { TZDate } from '@date-fns/tz';
 import { asc, eq } from 'drizzle-orm';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createTestDb } from '../test/db';
-import { books, readingSessions } from './schema';
-import { seed } from './seed';
+import { verifyPassword } from '../services/password';
+import { books, readingSessions, users } from './schema';
+import { demoUser, seed } from './seed';
 
 const now = new Date('2026-10-28T15:00:00Z');
 const db = createTestDb();
@@ -13,6 +14,27 @@ beforeAll(() => {
 });
 
 describe('seed', () => {
+  it('creates the demo user, who owns every book and session', async () => {
+    const [user, ...others] = db.select().from(users).all();
+    expect(others).toHaveLength(0);
+    expect(user).toMatchObject({ name: demoUser.name, nick: demoUser.nick });
+    expect(await verifyPassword(demoUser.password, user!.passwordHash)).toBe(true);
+    expect(
+      db
+        .select()
+        .from(books)
+        .all()
+        .every((b) => b.userId === user!.id),
+    ).toBe(true);
+    expect(
+      db
+        .select()
+        .from(readingSessions)
+        .all()
+        .every((s) => s.userId === user!.id),
+    ).toBe(true);
+  });
+
   it('inserts the demo books with every status', () => {
     const rows = db.select().from(books).all();
     expect(rows).toHaveLength(5);

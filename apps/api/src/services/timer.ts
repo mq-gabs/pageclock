@@ -19,11 +19,16 @@ import { HttpError } from '../middleware/errors';
 import { findBookRow, getBookWithProgress } from './books';
 import { saveSession, toRecord, toSession } from './sessions';
 
-const findRunningRow = (db: DbOrTx): ReadingSessionRow | undefined =>
-  db.select().from(readingSessions).where(isNull(readingSessions.endedAt)).get();
+/** The user's running session; each user has at most one. */
+const findRunningRow = (db: DbOrTx, userId: string): ReadingSessionRow | undefined =>
+  db
+    .select()
+    .from(readingSessions)
+    .where(and(eq(readingSessions.userId, userId), isNull(readingSessions.endedAt)))
+    .get();
 
-function requireRunning(db: DbOrTx): ReadingSessionRow {
-  const row = findRunningRow(db);
+function requireRunning(db: DbOrTx, userId: string): ReadingSessionRow {
+  const row = findRunningRow(db, userId);
   if (!row) throw new HttpError(404, 'no_timer', 'No timer is running');
   return row;
 }
@@ -39,12 +44,13 @@ function assertStartPage(startPage: number, totalPages: number) {
 }
 
 function toTimer(db: DbOrTx, row: ReadingSessionRow): Timer {
+  // The row belongs to row.userId, so its book does too.
   const previous = latestSessionBefore(bookSessions(db, row.bookId), row.startedAt, {
     excludeId: row.id,
   });
   return {
     session: toSession(row),
-    book: getBookWithProgress(db, row.bookId),
+    book: getBookWithProgress(db, row.userId, row.bookId),
     previous: previous
       ? { endPage: previous.endPage, startedAt: previous.startedAt.toISOString() }
       : null,
@@ -52,34 +58,44 @@ function toTimer(db: DbOrTx, row: ReadingSessionRow): Timer {
 }
 
 /** The running timer with its book, or null. */
-export function getTimer(db: Db): Timer | null {
-  const row = findRunningRow(db);
+export function getTimer(db: Db, userId: string): Timer | null {
+  const row = findRunningRow(db, userId);
   return row ? toTimer(db, row) : null;
 }
 
 /** Rule 5: start a timer unless one is running; rule 1 fills in the start page if missing. */
-export function startTimer(db: Db, input: StartTimerInput, now = new Date()): Timer {
+export function startTimer(
+  db: Db,
+  userId: string,
+  input: StartTimerInput,
+  now = new Date(),
+): Timer {
   return db.transaction((tx) => {
-    if (findRunningRow(tx)) {
+    if (findRunningRow(tx, userId)) {
       throw new HttpError(409, 'timer_running', 'A timer is already running');
     }
-    const book = findBookRow(tx, input.bookId);
+    const book = findBookRow(tx, userId, input.bookId);
     const startPage =
       input.startPage ?? suggestStartPage(bookSessions(tx, book.id), now, book.totalPages);
     assertStartPage(startPage, book.totalPages);
     const row = tx
       .insert(readingSessions)
-      .values({ bookId: book.id, startedAt: now, startPage, source: 'timer' })
+      .values({ userId, bookId: book.id, startedAt: now, startPage, source: 'timer' })
       .returning()
       .get();
     return toTimer(tx, row);
   });
 }
 
-export function updateTimer(db: Db, input: UpdateTimerInput, now = new Date()): Timer {
+export function updateTimer(
+  db: Db,
+  userId: string,
+  input: UpdateTimerInput,
+  now = new Date(),
+): Timer {
   return db.transaction((tx) => {
-    const row = requireRunning(tx);
-    assertStartPage(input.startPage, findBookRow(tx, row.bookId).totalPages);
+    const row = requireRunning(tx, userId);
+    assertStartPage(input.startPage, findBookRow(tx, userId, row.bookId).totalPages);
     const updated = tx
       .update(readingSessions)
       .set({ startPage: input.startPage, updatedAt: now })
@@ -90,9 +106,9 @@ export function updateTimer(db: Db, input: UpdateTimerInput, now = new Date()): 
   });
 }
 
-export function pauseTimer(db: Db, now = new Date()): Timer {
+export function pauseTimer(db: Db, userId: string, now = new Date()): Timer {
   return db.transaction((tx) => {
-    const row = requireRunning(tx);
+    const row = requireRunning(tx, userId);
     if (row.pausedAt) throw new HttpError(409, 'timer_paused', 'The timer is already paused');
     const updated = tx
       .update(readingSessions)
@@ -104,9 +120,9 @@ export function pauseTimer(db: Db, now = new Date()): Timer {
   });
 }
 
-export function resumeTimer(db: Db, now = new Date()): Timer {
+export function resumeTimer(db: Db, userId: string, now = new Date()): Timer {
   return db.transaction((tx) => {
-    const row = requireRunning(tx);
+    const row = requireRunning(tx, userId);
     if (!row.pausedAt) throw new HttpError(409, 'timer_not_paused', 'The timer isn’t paused');
     const updated = tx
       .update(readingSessions)
@@ -122,8 +138,13 @@ export function resumeTimer(db: Db, now = new Date()): Timer {
  * Rule 5: stop with an end page, through the same rules 2–4 and 6 as a manual log. A paused
  * timer ends when it was paused, so the time spent on the Finish screen doesn't count.
  */
-export function stopTimer(db: Db, input: StopTimerInput, now = new Date()): SaveSessionResponse {
-  const row = requireRunning(db);
+export function stopTimer(
+  db: Db,
+  userId: string,
+  input: StopTimerInput,
+  now = new Date(),
+): SaveSessionResponse {
+  const row = requireRunning(db, userId);
   const endedAt = timerEndedAt(row, now);
   const draft: SessionDraft = {
     id: row.id,
@@ -134,7 +155,7 @@ export function stopTimer(db: Db, input: StopTimerInput, now = new Date()): Save
     endPage: input.endPage,
     pausedSeconds: row.pausedSeconds,
   };
-  return saveSession(db, draft, {
+  return saveSession(db, userId, draft, {
     confirmWarnings: input.confirmWarnings,
     now,
     write: (tx) => {

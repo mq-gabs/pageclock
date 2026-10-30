@@ -1,3 +1,4 @@
+export * from './auth';
 export * from './api';
 export * from './books';
 export * from './save-session';

@@ -1,4 +1,3 @@
-import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   apiErrorSchema,
@@ -8,19 +7,20 @@ import {
 } from '@reading-tracker/shared';
 import { createApp } from '../app';
 import { seed } from '../db/seed';
+import { authedAgent } from '../test/auth';
 import { createTestDb } from '../test/db';
 
 const now = new Date('2026-10-28T15:00:00Z');
-let app: ReturnType<typeof createApp>;
+let api: ReturnType<typeof authedAgent>;
 
 beforeEach(() => {
   const db = createTestDb();
-  seed(db, now, 'America/Fortaleza');
-  app = createApp({ db });
+  const { userId } = seed(db, now, 'America/Fortaleza');
+  api = authedAgent(createApp({ db }), db, userId);
 });
 
 const list = async (query = '') =>
-  listBooksResponseSchema.parse((await request(app).get(`/api/books${query}`)).body);
+  listBooksResponseSchema.parse((await api.get(`/api/books${query}`)).body);
 const titles = async (query = '') => (await list(query)).books.map((b) => b.title);
 const idOf = async (title: string) => (await list()).books.find((b) => b.title === title)!.id;
 const errorOf = (body: unknown) => apiErrorSchema.parse(body).error;
@@ -28,7 +28,7 @@ const missingId = '00000000-0000-4000-8000-000000000000';
 
 describe('GET /api/books', () => {
   it('lists all books, most recently updated first, with progress', async () => {
-    const res = await request(app).get('/api/books');
+    const res = await api.get('/api/books');
     expect(res.status).toBe(200);
     const { books, counts } = listBooksResponseSchema.parse(res.body);
     expect(books).toHaveLength(5);
@@ -64,7 +64,7 @@ describe('GET /api/books', () => {
   });
 
   it('rejects an unknown status with field errors', async () => {
-    const res = await request(app).get('/api/books?status=abandoned');
+    const res = await api.get('/api/books?status=abandoned');
     expect(res.status).toBe(400);
     const error = errorOf(res.body);
     expect(error.code).toBe('validation_error');
@@ -72,13 +72,13 @@ describe('GET /api/books', () => {
   });
 
   it('rejects a repeated status parameter', async () => {
-    expect((await request(app).get('/api/books?status=reading&status=finished')).status).toBe(400);
+    expect((await api.get('/api/books?status=reading&status=finished')).status).toBe(400);
   });
 });
 
 describe('POST /api/books', () => {
   it('creates a book that starts as want_to_read', async () => {
-    const res = await request(app)
+    const res = await api
       .post('/api/books')
       .send({ title: ' Dune ', author: 'Frank Herbert', totalPages: 688 });
     expect(res.status).toBe(201);
@@ -93,15 +93,13 @@ describe('POST /api/books', () => {
   });
 
   it('rejects invalid fields', async () => {
-    const res = await request(app)
-      .post('/api/books')
-      .send({ title: '', author: 'A', totalPages: 0 });
+    const res = await api.post('/api/books').send({ title: '', author: 'A', totalPages: 0 });
     expect(res.status).toBe(400);
     expect(Object.keys(errorOf(res.body).fields ?? {}).sort()).toEqual(['title', 'totalPages']);
   });
 
   it('rejects a missing body', async () => {
-    const res = await request(app).post('/api/books');
+    const res = await api.post('/api/books');
     expect(res.status).toBe(400);
     expect(errorOf(res.body).code).toBe('validation_error');
   });
@@ -109,7 +107,7 @@ describe('POST /api/books', () => {
 
 describe('GET /api/books/:id', () => {
   it('returns the book with progress and per-book stats', async () => {
-    const res = await request(app).get(`/api/books/${await idOf('Project Hail Mary')}`);
+    const res = await api.get(`/api/books/${await idOf('Project Hail Mary')}`);
     expect(res.status).toBe(200);
     const { book, stats } = bookDetailSchema.parse(res.body);
     expect(book).toMatchObject({ progress: 174, percent: 37, status: 'reading' });
@@ -121,7 +119,7 @@ describe('GET /api/books/:id', () => {
 
   it('returns empty stats for a book without sessions', async () => {
     const { stats } = bookDetailSchema.parse(
-      (await request(app).get(`/api/books/${await idOf('Piranesi')}`)).body,
+      (await api.get(`/api/books/${await idOf('Piranesi')}`)).body,
     );
     expect(stats).toEqual({
       pages: 0,
@@ -135,8 +133,8 @@ describe('GET /api/books/:id', () => {
   });
 
   it('returns 404 for an unknown id and 400 for a malformed one', async () => {
-    expect((await request(app).get(`/api/books/${missingId}`)).status).toBe(404);
-    const res = await request(app).get('/api/books/not-a-uuid');
+    expect((await api.get(`/api/books/${missingId}`)).status).toBe(404);
+    const res = await api.get('/api/books/not-a-uuid');
     expect(res.status).toBe(400);
     expect(errorOf(res.body).fields?.id).toBeDefined();
   });
@@ -145,7 +143,7 @@ describe('GET /api/books/:id', () => {
 describe('PATCH /api/books/:id', () => {
   it('edits text fields', async () => {
     const id = await idOf('Piranesi');
-    const res = await request(app)
+    const res = await api
       .patch(`/api/books/${id}`)
       .send({ title: 'Piranesi (2020)', totalPages: 245 });
     expect(res.status).toBe(200);
@@ -158,13 +156,13 @@ describe('PATCH /api/books/:id', () => {
   it('sets finishedAt when finishing and clears it when reopening', async () => {
     const id = await idOf('Project Hail Mary');
     const finished = bookWithProgressSchema.parse(
-      (await request(app).patch(`/api/books/${id}`).send({ status: 'finished' })).body,
+      (await api.patch(`/api/books/${id}`).send({ status: 'finished' })).body,
     );
     expect(finished.status).toBe('finished');
     expect(finished.finishedAt).not.toBeNull();
 
     const reopened = bookWithProgressSchema.parse(
-      (await request(app).patch(`/api/books/${id}`).send({ status: 'reading' })).body,
+      (await api.patch(`/api/books/${id}`).send({ status: 'reading' })).body,
     );
     expect(reopened.finishedAt).toBeNull();
   });
@@ -172,14 +170,14 @@ describe('PATCH /api/books/:id', () => {
   it('keeps the original finishedAt when a finished book is saved as finished again', async () => {
     const id = await idOf('The Left Hand of Darkness');
     const before = (await list()).books.find((b) => b.id === id)!.finishedAt;
-    const res = await request(app)
+    const res = await api
       .patch(`/api/books/${id}`)
       .send({ status: 'finished', title: 'The Left Hand of Darkness' });
     expect(bookWithProgressSchema.parse(res.body).finishedAt).toBe(before);
   });
 
   it('refuses total pages below the pages already read', async () => {
-    const res = await request(app)
+    const res = await api
       .patch(`/api/books/${await idOf('Project Hail Mary')}`)
       .send({ totalPages: 100 });
     expect(res.status).toBe(400);
@@ -188,29 +186,25 @@ describe('PATCH /api/books/:id', () => {
 
   it('rejects an empty or invalid update', async () => {
     const id = await idOf('Piranesi');
-    expect((await request(app).patch(`/api/books/${id}`).send({})).status).toBe(400);
-    expect((await request(app).patch(`/api/books/${id}`).send({ status: 'lost' })).status).toBe(
-      400,
-    );
+    expect((await api.patch(`/api/books/${id}`).send({})).status).toBe(400);
+    expect((await api.patch(`/api/books/${id}`).send({ status: 'lost' })).status).toBe(400);
   });
 
   it('returns 404 for an unknown book', async () => {
-    expect((await request(app).patch(`/api/books/${missingId}`).send({ title: 'x' })).status).toBe(
-      404,
-    );
+    expect((await api.patch(`/api/books/${missingId}`).send({ title: 'x' })).status).toBe(404);
   });
 });
 
 describe('DELETE /api/books/:id', () => {
   it('deletes the book and its sessions', async () => {
     const id = await idOf('Project Hail Mary');
-    expect((await request(app).delete(`/api/books/${id}`)).status).toBe(204);
-    expect((await request(app).get(`/api/books/${id}`)).status).toBe(404);
+    expect((await api.delete(`/api/books/${id}`)).status).toBe(204);
+    expect((await api.get(`/api/books/${id}`)).status).toBe(404);
     expect(await titles()).toHaveLength(4);
   });
 
   it('returns 404 for an unknown book and 400 for a malformed id', async () => {
-    expect((await request(app).delete(`/api/books/${missingId}`)).status).toBe(404);
-    expect((await request(app).delete('/api/books/nope')).status).toBe(400);
+    expect((await api.delete(`/api/books/${missingId}`)).status).toBe(404);
+    expect((await api.delete('/api/books/nope')).status).toBe(400);
   });
 });

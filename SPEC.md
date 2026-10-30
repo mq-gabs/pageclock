@@ -15,8 +15,9 @@ This spec is the source of truth for implementation with Claude Code: build in t
   - Page check: a new or edited log is compared with the book's sessions just before and after it in time. If the pages don't line up, show a warning (gap = skipped pages, overlap = pages counted twice) and let the user fix it or save anyway.
   - Hard rules: end time after start time, start page at least 1, end page not before start page, end page not above the book's total pages.
 - **Stats:** pages and minutes by week, month and year; average speed; calendar of reading days; current streak.
+- **Accounts:** create an account (name, unique nick, password), sign in and out; every screen and API route except sign-in and create-account needs a signed-in user, and each user sees only their own books, sessions, timer and stats. Settings changes the name, the nick (must be unique) and the password (the current password is checked first).
 
-Later, not in MVP: ISBN lookup, tags, re-reads, goals, import/export, sign-in and multiple users, real book covers, hosting.
+Later, not in MVP: ISBN lookup, tags, re-reads, goals, import/export, password reset, real book covers, hosting.
 
 ## Metrics
 
@@ -48,9 +49,21 @@ These rules live in `packages/shared` as pure functions with unit tests, and the
 
 ## Data model
 
-Two tables in SQLite via Drizzle (`apps/api/src/db/schema.ts`). There is no sign-in yet, so there is no users table; accounts later mean a users table plus a user_id column via migration. IDs are text UUIDs; timestamps use `integer({ mode: 'timestamp_ms' })` in UTC.
+Four tables in SQLite via Drizzle (`apps/api/src/db/schema.ts`). IDs are text UUIDs; timestamps use `integer({ mode: 'timestamp_ms' })` in UTC.
 
-**books**
+**users**
+
+| Column                 | Type      | Rules                                                            |
+| ---------------------- | --------- | ---------------------------------------------------------------- |
+| id                     | text      | PK                                                               |
+| name                   | text      | not null, 1–100 chars                                            |
+| nick                   | text      | not null, unique, 3–30 chars, lowercase letters, digits, `.` `_` |
+| password_hash          | text      | scrypt with a random salt                                        |
+| created_at, updated_at | timestamp | default now                                                      |
+
+**auth_tokens**: token_hash (PK, SHA-256 of the bearer token), user_id (FK → users, cascade), expires_at (30 days after sign-in), created_at.
+
+**books** (and **reading_sessions**) have a `user_id` FK → users, cascade.
 
 | Column                 | Type      | Rules                                                 |
 | ---------------------- | --------- | ----------------------------------------------------- |
@@ -81,10 +94,16 @@ Indexes: `reading_sessions(started_at)` and `reading_sessions(book_id, started_a
 
 ## API
 
-Express serves JSON under `/api`; Next.js rewrites `/api/*` to it, so the browser sees one origin and no CORS setup is needed. There is no authentication in the MVP. Request and response bodies are validated with the Zod schemas from `packages/shared`.
+Express serves JSON under `/api`; Next.js rewrites `/api/*` to it, so the browser sees one origin and no CORS setup is needed. Every route except `/api/health` and `/api/auth/sign-up|sign-in` needs `Authorization: Bearer <token>` and answers 401 without a valid one; another user's book or session is a 404. Request and response bodies are validated with the Zod schemas from `packages/shared`.
 
 | Method | Path                                              | Notes                                                           |
 | ------ | ------------------------------------------------- | --------------------------------------------------------------- |
+| POST   | /api/auth/sign-up                                 | { name, nick, password } → 201 { token, user }; 409 nick_taken  |
+| POST   | /api/auth/sign-in                                 | { nick, password } → { token, user }; 401 if wrong              |
+| POST   | /api/auth/sign-out                                | Ends the token that sent it                                     |
+| GET    | /api/me                                           | { user }                                                        |
+| PATCH  | /api/me                                           | { name?, nick? }; 409 nick_taken                                |
+| PUT    | /api/me/password                                  | { currentPassword, newPassword }; signs out other devices       |
 | GET    | /api/books?status=&q=                             | List with progress and percent                                  |
 | POST   | /api/books                                        | title, author, totalPages                                       |
 | GET    | /api/books/:id                                    | Book, progress, per-book stats                                  |
@@ -144,8 +163,11 @@ Radii: 14 cards, 12 buttons and banners, 10 inputs, 6 calendar cells. Text sizes
 | /read             | Timer          | Elapsed time, start page field, Pause, Stop                                              |
 | /read/finish      | Finish session | End page, pages/time/speed summary, Save (dialog on desktop)                             |
 | /stats            | Stats          | Week/Month/Year switcher, 4 totals, pages-per-day bars, reading-days calendar, streaks   |
+| /settings         | Settings       | Profile (name, nick), change password, sign out                                          |
+| /sign-in          | Sign in        | Nick, password; link to Create account (no nav)                                          |
+| /create-account   | Create account | Name, nick, password (no nav)                                                            |
 
-`/` redirects to `/library`.
+`/` redirects to `/library`. Signed out, every other route goes to `/sign-in?next=<route>`.
 
 ## Tech stack
 
