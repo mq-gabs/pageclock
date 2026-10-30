@@ -21,7 +21,7 @@ let app: ReturnType<typeof createApp>;
 beforeEach(() => {
   db = createTestDb();
   seed(db, new Date(), 'America/Fortaleza');
-  app = createApp({ db });
+  app = createApp({ db, timeZone: 'America/Fortaleza' });
 });
 
 afterEach(() => {

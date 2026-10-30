@@ -1,6 +1,7 @@
 import { and, eq, gte, inArray, isNotNull, lt, type SQL } from 'drizzle-orm';
 import {
   addDays,
+  APP_TIME_ZONE,
   daily,
   previousPeriodRange,
   periodRange,
@@ -15,7 +16,6 @@ import {
   type StatsSummaryQuery,
   type StatsSummaryResponse,
 } from '@reading-tracker/shared';
-import { config } from '../config';
 import type { Db } from '../db/client';
 import { books, readingSessions } from '../db/schema';
 import { toRecord } from './sessions';
@@ -53,7 +53,7 @@ export function getSummary(
   userId: string,
   query: StatsSummaryQuery,
   now = new Date(),
-  timeZone = config.appTimezone,
+  timeZone: string = APP_TIME_ZONE,
 ): StatsSummaryResponse {
   const today = toDateKey(now, timeZone);
   const date = query.date ?? today;
@@ -68,7 +68,7 @@ export function getDaily(
   db: Db,
   userId: string,
   query: StatsDailyQuery,
-  timeZone = config.appTimezone,
+  timeZone: string = APP_TIME_ZONE,
 ): StatsDailyResponse {
   const days = daily(completedSessions(db, userId, query), { ...query, timeZone });
   const ids = [...new Set(days.flatMap((d) => d.books.map((b) => b.bookId)))];
@@ -94,7 +94,7 @@ export function getStreaks(
   db: Db,
   userId: string,
   now = new Date(),
-  timeZone = config.appTimezone,
+  timeZone: string = APP_TIME_ZONE,
 ): StatsStreaksResponse {
   const today = toDateKey(now, timeZone);
   return { ...streaks(completedSessions(db, userId), { today, timeZone }), today };

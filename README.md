@@ -39,6 +39,8 @@ Open <http://localhost:3000> and create an account, or sign in to the demo accou
 
 Stop both apps with `Ctrl+C`.
 
+Settings come from `apps/api/.env.local` (`PORT`, `HOST`, `DATABASE_URL`, `LOG_LEVEL`) and `apps/web/.env.local` (`API_URL`, read at build time). Both files are optional and gitignored; copy each app's `.env.example` to start one (`cp apps/api/.env.example apps/api/.env.local`); every setting has a default, and real environment variables override the files.
+
 > `db-seed` **wipes the database** (every account too) and loads the demo account and library, with dates relative to today. Skip it to start empty.
 
 ## Everyday commands
@@ -69,16 +71,14 @@ Run `db-migrate` against the same database first. The API never migrates on star
 
 ## Configuration
 
-Everything has a working default. To change a setting, set an environment variable in the shell that runs the command. For example: `APP_TIMEZONE=Europe/Lisbon NEXT_PUBLIC_APP_TIMEZONE=Europe/Lisbon pnpm dev`.
+Everything has a working default. To change a setting, set an environment variable in the shell that runs the command. For example: `PORT=4000 API_URL=http://localhost:4000 pnpm dev`. Dates and days are always UTC.
 
-| Variable                   | App | Default                     | What it does                                                             |
-| -------------------------- | --- | --------------------------- | ------------------------------------------------------------------------ |
-| `APP_TIMEZONE`             | API | `America/Fortaleza`         | Time zone used to group sessions into days, weeks, months and years.     |
-| `NEXT_PUBLIC_APP_TIMEZONE` | web | `America/Fortaleza`         | Time zone for dates and times in forms. Keep it equal to `APP_TIMEZONE`. |
-| `DATABASE_URL`             | API | `./data/reading-tracker.db` | SQLite file, relative to `apps/api`.                                     |
-| `PORT` / `HOST`            | API | `3333` / `localhost`        | Where the API listens.                                                   |
-| `API_URL`                  | web | `http://localhost:3333`     | Where the web app forwards `/api/*`.                                     |
-| `LOG_LEVEL`                | API | `info` (`silent` in tests)  | pino log level.                                                          |
+| Variable        | App | Default                     | What it does                         |
+| --------------- | --- | --------------------------- | ------------------------------------ |
+| `DATABASE_URL`  | API | `./data/reading-tracker.db` | SQLite file, relative to `apps/api`. |
+| `PORT` / `HOST` | API | `3333` / `localhost`        | Where the API listens.               |
+| `API_URL`       | web | `http://localhost:3333`     | Where the web app forwards `/api/*`. |
+| `LOG_LEVEL`     | API | `info` (`silent` in tests)  | pino log level.                      |
 
 ## Project layout
 

@@ -4,7 +4,7 @@ export const statsPeriods = ['week', 'month', 'year'] as const;
 export const statsPeriodSchema = z.enum(statsPeriods);
 export type StatsPeriod = z.infer<typeof statsPeriodSchema>;
 
-/** A calendar date in APP_TIMEZONE, `yyyy-MM-dd`. */
+/** A calendar date in UTC, `yyyy-MM-dd`. */
 export type DateKey = string;
 
 export const dateKeySchema = z
@@ -24,7 +24,7 @@ const keyToMs = (key: string) => {
   return Date.UTC(y, m - 1, d);
 };
 
-/** `?period=&date=`; `date` defaults to today in APP_TIMEZONE. */
+/** `?period=&date=`; `date` defaults to today (UTC). */
 export const statsSummaryQuerySchema = z.object({
   period: statsPeriodSchema,
   date: dateKeySchema.optional(),
@@ -58,7 +58,7 @@ export const periodTotalsSchema = z.object({
 
 export const statsSummaryResponseSchema = z.object({
   period: statsPeriodSchema,
-  /** Today in APP_TIMEZONE. */
+  /** Today (UTC). */
   today: dateKey,
   current: periodTotalsSchema,
   previous: periodTotalsSchema,

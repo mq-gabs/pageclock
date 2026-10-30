@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, inArray, or, sql, type SQL } from 'drizzle-orm';
 import {
+  APP_TIME_ZONE,
   bookProgress,
   progressPercent,
   readingDays,
@@ -13,7 +14,6 @@ import {
   type ListBooksResponse,
   type UpdateBookInput,
 } from '@reading-tracker/shared';
-import { config } from '../config';
 import type { Db, DbOrTx } from '../db/client';
 import { books, readingSessions, type BookRow } from '../db/schema';
 import { HttpError } from '../middleware/errors';
@@ -98,7 +98,12 @@ export function getBookWithProgress(db: DbOrTx, userId: string, id: string): Boo
   return withProgress(findBookRow(db, userId, id), endPagesByBook(db, [id]).get(id) ?? []);
 }
 
-export function getBook(db: Db, userId: string, id: string): BookDetail {
+export function getBook(
+  db: Db,
+  userId: string,
+  id: string,
+  timeZone: string = APP_TIME_ZONE,
+): BookDetail {
   const row = findBookRow(db, userId, id);
   const sessions = db
     .select()
@@ -119,7 +124,7 @@ export function getBook(db: Db, userId: string, id: string): BookDetail {
       minutes: sum.minutes,
       sessions: sum.sessions,
       speed: sum.speed,
-      readingDays: readingDays(sessions, config.appTimezone).length,
+      readingDays: readingDays(sessions, timeZone).length,
       firstReadAt: completed[0]?.startedAt.toISOString() ?? null,
       lastReadAt: completed.at(-1)?.startedAt.toISOString() ?? null,
     },

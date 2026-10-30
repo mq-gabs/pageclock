@@ -45,7 +45,7 @@ These rules live in `packages/shared` as pure functions with unit tests, and the
 5. **Timer.** At most one running session at a time (ended_at is null). Pause stores paused_at; resume adds the paused time to paused_seconds. Stop requires end_page and runs rules 2–4. The running timer is loaded from the API on page load, so it survives reloads and device switches.
 6. **Status.** New books start as want_to_read. Saving the first session moves want_to_read → reading. When a session reaches the last page, the UI offers "Mark as finished" (sets finished_at). The user can change status any time.
 7. **Progress** = max end_page over the book's sessions (0 if none); percent = round(progress ÷ total_pages × 100).
-8. **Time and days.** Store timestamps in UTC. Group by the APP_TIMEZONE setting (default America/Fortaleza): a session belongs to the local date of started_at; weeks start Monday. Do the grouping in TypeScript, not SQL.
+8. **Time and days.** Store timestamps in UTC. Group by UTC (fixed, not configurable): a session belongs to the UTC date of started_at; weeks start Monday. Do the grouping in TypeScript, not SQL.
 
 ## Data model
 

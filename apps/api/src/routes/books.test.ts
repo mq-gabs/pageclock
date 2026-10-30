@@ -16,7 +16,7 @@ let api: ReturnType<typeof authedAgent>;
 beforeEach(() => {
   const db = createTestDb();
   const { userId } = seed(db, now, 'America/Fortaleza');
-  api = authedAgent(createApp({ db }), db, userId);
+  api = authedAgent(createApp({ db, timeZone: 'America/Fortaleza' }), db, userId);
 });
 
 const list = async (query = '') =>

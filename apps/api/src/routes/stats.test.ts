@@ -32,7 +32,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'], now });
   db = createTestDb();
   userId = seed(db, now, 'America/Fortaleza').userId;
-  api = authedAgent(createApp({ db }), db, userId);
+  api = authedAgent(createApp({ db, timeZone: 'America/Fortaleza' }), db, userId);
 });
 
 afterEach(() => {
@@ -183,7 +183,7 @@ describe('GET /api/stats/streaks', () => {
 
   it('is empty without sessions', async () => {
     db = createTestDb();
-    api = authedAgent(createApp({ db }), db, createTestUser(db).id);
+    api = authedAgent(createApp({ db, timeZone: 'America/Fortaleza' }), db, createTestUser(db).id);
     expect(
       statsStreaksResponseSchema.parse((await api.get('/api/stats/streaks')).body),
     ).toMatchObject({ current: 0, longest: 0, currentSince: null, lastReadingDay: null });

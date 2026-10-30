@@ -27,7 +27,7 @@ const missingId = '00000000-0000-4000-8000-000000000000';
 beforeEach(() => {
   db = createTestDb();
   userId = seed(db, new Date(now), 'America/Fortaleza').userId;
-  api = authedAgent(createApp({ db }), db, userId);
+  api = authedAgent(createApp({ db, timeZone: 'America/Fortaleza' }), db, userId);
 });
 
 async function bookId(title: string) {

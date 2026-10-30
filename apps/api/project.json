@@ -6,7 +6,7 @@
   "tags": ["scope:api"],
   "targets": {
     "dev": {
-      "command": "tsx watch --clear-screen=false src/main.ts",
+      "command": "tsx watch --clear-screen=false --env-file-if-exists=.env.local src/main.ts",
       "options": {
         "cwd": "apps/api"
       }
@@ -18,7 +18,7 @@
       }
     },
     "start": {
-      "command": "node dist/main.js",
+      "command": "node --env-file-if-exists=.env.local dist/main.js",
       "options": {
         "cwd": "apps/api"
       }
@@ -48,13 +48,13 @@
       }
     },
     "db-migrate": {
-      "command": "tsx src/db/migrate.ts",
+      "command": "tsx --env-file-if-exists=.env.local src/db/migrate.ts",
       "options": {
         "cwd": "apps/api"
       }
     },
     "db-seed": {
-      "command": "tsx src/db/seed.ts",
+      "command": "tsx --env-file-if-exists=.env.local src/db/seed.ts",
       "options": {
         "cwd": "apps/api"
       }

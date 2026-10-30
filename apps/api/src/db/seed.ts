@@ -2,7 +2,7 @@ import { pathToFileURL } from 'node:url';
 import { TZDate } from '@date-fns/tz';
 import { addMinutes, set, subDays } from 'date-fns';
 import { createInsertSchema } from 'drizzle-zod';
-import { bookLimits, type BookStatus } from '@reading-tracker/shared';
+import { APP_TIME_ZONE, bookLimits, type BookStatus } from '@reading-tracker/shared';
 import { config } from '../config';
 import { logger } from '../logger';
 import { hashPasswordSync } from '../services/password';
@@ -19,7 +19,7 @@ import {
 /** The account that owns the demo library. */
 export const demoUser = { name: 'Demo Reader', nick: 'demo', password: 'pageclock' } as const;
 
-/** One logged session: local start ("N days ago at HH:mm" in APP_TIMEZONE), length and pages read. */
+/** One logged session: local start ("N days ago at HH:mm" in the seed's time zone, UTC by default), length and pages read. */
 type DemoSession = [daysAgo: number, localTime: string, minutes: number, pages: number];
 
 interface DemoBook {
@@ -107,7 +107,7 @@ function localStart(now: Date, daysAgo: number, localTime: string, timeZone: str
 }
 
 /** Replaces all data (every account too) with the demo user and library. Dates are relative to `now`. */
-export function seed(db: Db, now = new Date(), timeZone = config.appTimezone) {
+export function seed(db: Db, now = new Date(), timeZone: string = APP_TIME_ZONE) {
   const userId = crypto.randomUUID();
   const bookRows: NewBookRow[] = [];
   const sessionRows: NewReadingSessionRow[] = [];

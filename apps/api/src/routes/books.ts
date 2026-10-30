@@ -13,7 +13,7 @@ import { parseBody, parseParams, parseQuery } from '../middleware/validate';
 import { createBook, deleteBook, getBook, listBooks, updateBook } from '../services/books';
 import { listBookSessions, suggestedStartPage } from '../services/sessions';
 
-export function booksRouter(db: Db) {
+export function booksRouter(db: Db, timeZone: string) {
   const router = Router();
 
   router.get('/', (req, res) => {
@@ -26,7 +26,7 @@ export function booksRouter(db: Db) {
 
   router.get('/:id', (req, res) => {
     const { id } = parseParams(bookIdParamsSchema, req.params);
-    res.json(getBook(db, userIdOf(req), id));
+    res.json(getBook(db, userIdOf(req), id, timeZone));
   });
 
   router.patch('/:id', (req, res) => {

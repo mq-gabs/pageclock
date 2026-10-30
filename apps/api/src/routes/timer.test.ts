@@ -27,7 +27,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'], now: start });
   db = createTestDb();
   userId = seed(db, new Date(start), 'America/Fortaleza').userId;
-  api = authedAgent(createApp({ db }), db, userId);
+  api = authedAgent(createApp({ db, timeZone: 'America/Fortaleza' }), db, userId);
 });
 
 afterEach(() => {
@@ -62,7 +62,7 @@ describe('the milestone 6 flow', () => {
     expect(timer.previous?.endPage).toBe(174);
 
     // "Reload" on another device: a fresh app and token on the same database still see the timer.
-    api = authedAgent(createApp({ db }), db, userId);
+    api = authedAgent(createApp({ db, timeZone: 'America/Fortaleza' }), db, userId);
     expect((await getTimer())?.session.id).toBe(timer.session.id);
 
     at(40);

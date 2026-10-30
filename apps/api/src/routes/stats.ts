@@ -5,19 +5,27 @@ import { userIdOf } from '../middleware/auth';
 import { parseQuery } from '../middleware/validate';
 import { getDaily, getStreaks, getSummary } from '../services/stats';
 
-export function statsRouter(db: Db) {
+export function statsRouter(db: Db, timeZone: string) {
   const router = Router();
 
   router.get('/summary', (req, res) => {
-    res.json(getSummary(db, userIdOf(req), parseQuery(statsSummaryQuerySchema, req.query)));
+    res.json(
+      getSummary(
+        db,
+        userIdOf(req),
+        parseQuery(statsSummaryQuerySchema, req.query),
+        new Date(),
+        timeZone,
+      ),
+    );
   });
 
   router.get('/daily', (req, res) => {
-    res.json(getDaily(db, userIdOf(req), parseQuery(statsDailyQuerySchema, req.query)));
+    res.json(getDaily(db, userIdOf(req), parseQuery(statsDailyQuerySchema, req.query), timeZone));
   });
 
   router.get('/streaks', (req, res) => {
-    res.json(getStreaks(db, userIdOf(req)));
+    res.json(getStreaks(db, userIdOf(req), new Date(), timeZone));
   });
 
   return router;

@@ -7,7 +7,8 @@ import type { DateKey, StatsPeriod } from '../schemas/stats';
  * The time zone is only used to turn an instant into its local date.
  */
 
-export const DEFAULT_TIME_ZONE = 'America/Fortaleza';
+/** The app always groups days and shows times in UTC. */
+export const APP_TIME_ZONE = 'UTC';
 
 /** The local date of an instant in `timeZone`. */
 export function toDateKey(instant: Date, timeZone: string): DateKey {
