@@ -20,3 +20,15 @@ export const parseQuery = <T extends z.ZodType>(schema: T, data: unknown) =>
   parseOrThrow(schema, data, 'query');
 export const parseParams = <T extends z.ZodType>(schema: T, data: unknown) =>
   parseOrThrow(schema, data, 'params');
+
+/** Like `parseBody`, but keys errors by their full path (`books.2.title`), for nested bodies. */
+export function parseBodyByPath<T extends z.ZodType>(schema: T, data: unknown): z.infer<T> {
+  const result = schema.safeParse(data);
+  if (result.success) return result.data;
+  const fields: Record<string, string[]> = {};
+  for (const issue of result.error.issues) {
+    const path = issue.path.map(String).join('.') || '_';
+    (fields[path] ??= []).push(issue.message);
+  }
+  throw new HttpError(400, 'validation_error', 'Invalid request body', fields);
+}

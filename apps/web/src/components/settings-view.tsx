@@ -1,13 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Download, Upload } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { changePasswordSchema, signUpSchema, userLimits, type User } from '@reading-tracker/shared';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { backupErrorLines, backupFileName, importSummary } from '@/lib/backup';
 import { setApiErrors } from '@/lib/form-errors';
-import { useChangePassword, useMe, useSignOut, useUpdateProfile } from '@/lib/queries';
+import {
+  fetchBackup,
+  useChangePassword,
+  useImportBackup,
+  useMe,
+  useSignOut,
+  useUpdateProfile,
+} from '@/lib/queries';
 import { Field } from './field';
 import { Skeleton } from './skeletons';
 import { ErrorState } from './states';
@@ -171,6 +180,112 @@ function PasswordForm({ nick }: { nick: string }) {
   );
 }
 
+function saveJsonFile(data: unknown, fileName: string) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+type BackupStatus = { kind: 'error'; lines: string[] } | { kind: 'success'; message: string };
+
+/** Download the library as JSON, or merge a backup file into it. */
+function BackupCard() {
+  const importBackup = useImportBackup();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [status, setStatus] = useState<BackupStatus | null>(null);
+
+  const download = async () => {
+    setStatus(null);
+    setDownloading(true);
+    try {
+      saveJsonFile(await fetchBackup(), backupFileName(new Date()));
+    } catch (error) {
+      setStatus({ kind: 'error', lines: backupErrorLines(error) });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const upload = async (file: File) => {
+    setStatus(null);
+    let data: unknown;
+    try {
+      data = JSON.parse(await file.text());
+    } catch {
+      setStatus({ kind: 'error', lines: [`${file.name} isn’t a valid JSON file.`] });
+      return;
+    }
+    try {
+      const result = await importBackup.mutateAsync(data);
+      setStatus({ kind: 'success', message: importSummary(result) });
+    } catch (error) {
+      setStatus({ kind: 'error', lines: backupErrorLines(error) });
+    }
+  };
+
+  return (
+    <section className={card} aria-labelledby="backup-heading">
+      <SectionHeading
+        id="backup-heading"
+        title="Backup"
+        description="Download your books and reading sessions as a JSON file, or add the ones from a backup. Books and sessions you already have are skipped."
+      />
+      <div className="flex flex-wrap gap-3">
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={downloading}
+          onClick={() => void download()}
+        >
+          <Download aria-hidden />
+          {downloading ? 'Preparing…' : 'Download backup'}
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={importBackup.isPending}
+          onClick={() => fileInput.current?.click()}
+        >
+          <Upload aria-hidden />
+          {importBackup.isPending ? 'Importing…' : 'Import backup'}
+        </Button>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          aria-label="Backup file"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            // Clear it so choosing the same file again still fires a change.
+            event.target.value = '';
+            if (file) void upload(file);
+          }}
+        />
+      </div>
+      {status?.kind === 'error' ? (
+        <div role="alert" className="flex flex-col gap-1 text-meta text-destructive">
+          {status.lines.length > 1 && <p>The backup wasn’t imported:</p>}
+          <ul className={status.lines.length > 1 ? 'list-disc pl-5' : undefined}>
+            {status.lines.map((line, index) => (
+              <li key={`${index}-${line}`}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p role="status" className="text-meta text-accent">
+          {status?.message}
+        </p>
+      )}
+    </section>
+  );
+}
+
 function SignOutCard() {
   const signOut = useSignOut();
   return (
@@ -225,6 +340,7 @@ export function SettingsView() {
           <>
             <ProfileForm key={user.id} user={user} />
             <PasswordForm nick={user.nick} />
+            <BackupCard />
           </>
         )}
         <SignOutCard />

@@ -41,6 +41,13 @@ export const errorHandler: ErrorRequestHandler = (err: unknown, _req, res, _next
     res.status(400).json(body);
     return;
   }
+  if (err instanceof Error && 'type' in err && err.type === 'entity.too.large') {
+    const body: ApiError = {
+      error: { code: 'payload_too_large', message: 'The request body is too large' },
+    };
+    res.status(413).json(body);
+    return;
+  }
   logger.error({ err }, 'Unhandled error');
   const body: ApiError = { error: { code: 'internal_error', message: 'Something went wrong' } };
   res.status(500).json(body);

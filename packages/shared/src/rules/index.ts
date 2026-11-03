@@ -5,3 +5,4 @@ export * from './suggest-start-page';
 export * from './types';
 export * from './validate-session';
 export * from './timer';
+export * from './import-backup';

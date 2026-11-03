@@ -6,6 +6,7 @@ import { logger } from './logger';
 import { requireAuth } from './middleware/auth';
 import { errorHandler, notFound } from './middleware/errors';
 import { authRouter, meRouter } from './routes/auth';
+import { backupRouter } from './routes/backup';
 import { booksRouter } from './routes/books';
 import { healthRouter } from './routes/health';
 import { sessionsRouter } from './routes/sessions';
@@ -22,6 +23,8 @@ export function createApp({ db, timeZone = APP_TIME_ZONE }: AppDeps) {
   const app = express();
   app.disable('x-powered-by');
   app.use(pinoHttp({ logger }));
+  // Backup files are larger than the default 100 kB; parsed here, the global parser skips them.
+  app.use('/api/backup', express.json({ limit: '20mb' }));
   app.use(express.json());
 
   // Public routes.
@@ -35,6 +38,7 @@ export function createApp({ db, timeZone = APP_TIME_ZONE }: AppDeps) {
   app.use('/api/reading-sessions', auth, sessionsRouter(db));
   app.use('/api/timer', auth, timerRouter(db));
   app.use('/api/stats', auth, statsRouter(db, timeZone));
+  app.use('/api/backup', auth, backupRouter(db));
 
   app.use(notFound);
   app.use(errorHandler);

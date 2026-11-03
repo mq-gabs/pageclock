@@ -3,8 +3,10 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   authResponseSchema,
+  backupSchema,
   bookDetailSchema,
   bookWithProgressSchema,
+  importBackupResponseSchema,
   listBooksResponseSchema,
   listSessionsResponseSchema,
   meResponseSchema,
@@ -288,3 +290,15 @@ export const useChangePassword = () =>
   useMutation({
     mutationFn: (input: ChangePasswordInput) => apiNoContent('PUT', '/api/me/password', input),
   });
+
+/** The signed-in user's books and finished sessions, as a backup file's contents. */
+export const fetchBackup = () => api('GET', '/api/backup', backupSchema);
+
+/** Merges a backup file into the library (the API validates it); book and stats queries refresh. */
+export function useImportBackup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (backup: unknown) => api('POST', '/api/backup', importBackupResponseSchema, backup),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: bookKeys.all }),
+  });
+}

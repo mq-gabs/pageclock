@@ -16,8 +16,9 @@ This spec is the source of truth for implementation with Claude Code: build in t
   - Hard rules: end time after start time, start page at least 1, end page not before start page, end page not above the book's total pages.
 - **Stats:** pages and minutes by week, month and year; average speed; calendar of reading days; current streak.
 - **Accounts:** create an account (name, unique nick, password), sign in and out; every screen and API route except sign-in and create-account needs a signed-in user, and each user sees only their own books, sessions, timer and stats. Settings changes the name, the nick (must be unique) and the password (the current password is checked first).
+- **Backup:** Settings downloads the user's books and finished sessions as a JSON file and imports one back. Import merges: a book with the same title and author (ignoring case) is reused, an identical session (same book, times and pages) is skipped, so importing a file twice adds nothing. Sessions must pass the hard rules (rule 2) against the book they land on; page and time warnings are not checked. One invalid entry rejects the whole file.
 
-Later, not in MVP: ISBN lookup, tags, re-reads, goals, import/export, password reset, real book covers, hosting.
+Later, not in MVP: ISBN lookup, tags, re-reads, goals, password reset, real book covers, hosting.
 
 ## Metrics
 
@@ -123,6 +124,8 @@ Express serves JSON under `/api`; Next.js rewrites `/api/*` to it, so the browse
 | GET    | /api/stats/summary?period=week\|month\|year&date= | Totals, avg speed, reading days, change vs previous period      |
 | GET    | /api/stats/daily?from=&to=                        | Pages and minutes per local day (chart + calendar)              |
 | GET    | /api/stats/streaks                                | Current and longest streak                                      |
+| GET    | /api/backup                                       | Backup JSON: { format, version, exportedAt, books, sessions }   |
+| POST   | /api/backup                                       | Merges a backup (up to 20 MB) → { books, sessions } counts      |
 
 Errors use one shape: `{ error: { code, message, fields? } }`; warnings use `{ warnings: [{ code, message, suggestion? }] }`.
 
@@ -163,7 +166,7 @@ Radii: 14 cards, 12 buttons and banners, 10 inputs, 6 calendar cells. Text sizes
 | /read             | Timer          | Elapsed time, start page field, Pause, Stop                                              |
 | /read/finish      | Finish session | End page, pages/time/speed summary, Save (dialog on desktop)                             |
 | /stats            | Stats          | Week/Month/Year switcher, 4 totals, pages-per-day bars, reading-days calendar, streaks   |
-| /settings         | Settings       | Profile (name, nick), change password, sign out                                          |
+| /settings         | Settings       | Profile (name, nick), change password, backup download/import, sign out                  |
 | /sign-in          | Sign in        | Nick, password; link to Create account (no nav)                                          |
 | /create-account   | Create account | Name, nick, password (no nav)                                                            |
 
