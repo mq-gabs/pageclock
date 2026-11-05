@@ -1,7 +1,8 @@
 import { statsPeriods, type StatsPeriod } from '@reading-tracker/shared';
-import { cn } from '@/lib/utils';
+import { SegmentedControl } from './segmented-control';
 
 const labels: Record<StatsPeriod, string> = { week: 'Week', month: 'Month', year: 'Year' };
+const options = statsPeriods.map((period) => ({ value: period, label: labels[period] }));
 
 /** Figma "PeriodSwitcher": a segmented control. (Figma's "Custom" range is not in the MVP.) */
 export function PeriodSwitcher({
@@ -14,31 +15,12 @@ export function PeriodSwitcher({
   className?: string;
 }) {
   return (
-    <div
-      role="group"
-      aria-label="Period"
-      className={cn('flex rounded-button border border-border bg-surface p-1', className)}
-    >
-      {statsPeriods.map((period) => {
-        const active = period === value;
-        return (
-          <button
-            key={period}
-            type="button"
-            aria-pressed={active}
-            onClick={() => onChange(period)}
-            className={cn(
-              'flex-1 rounded-[8px] px-4 py-1.5 text-[15px] transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              active
-                ? 'bg-accent font-semibold text-surface'
-                : 'font-medium text-muted hover:text-ink',
-            )}
-          >
-            {labels[period]}
-          </button>
-        );
-      })}
-    </div>
+    <SegmentedControl
+      label="Period"
+      options={options}
+      value={value}
+      onChange={onChange}
+      className={className}
+    />
   );
 }

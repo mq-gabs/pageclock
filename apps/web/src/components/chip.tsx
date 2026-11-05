@@ -12,7 +12,7 @@ export function Chip({ active = false, className, ...props }: ChipProps) {
       aria-pressed={active}
       className={cn(
         'rounded-full border px-3 py-1.5 text-label font-medium whitespace-nowrap transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
         active
           ? 'border-accent bg-accent-tint text-accent'
           : 'border-border bg-surface text-ink hover:bg-bg',

@@ -6,8 +6,8 @@ const heatClass: Record<HeatLevel, string> = {
   0: 'bg-heat-0 text-ink',
   1: 'bg-heat-1 text-ink',
   2: 'bg-heat-2 text-ink',
-  3: 'bg-heat-3 text-surface',
-  4: 'bg-heat-4 text-surface',
+  3: 'bg-heat-3 text-on-accent',
+  4: 'bg-heat-4 text-on-accent',
 };
 
 const weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];

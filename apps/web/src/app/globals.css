@@ -1,21 +1,29 @@
 @import 'tailwindcss';
 
-/* Design tokens (SPEC.md › UI › Design tokens). Components use the Tailwind names, never raw hex. */
+/* Design tokens (SPEC.md › UI › Design tokens). Components use the Tailwind names, never raw hex.
+   Each token is light-dark(light, dark); `color-scheme` picks one. It follows the OS unless
+   `<html data-theme>` (lib/theme.ts, chosen in Settings) forces light or dark. */
 :root {
-  --bg: #faf8f5;
-  --surface: #ffffff;
-  --border: #e7e2da;
-  --ink: #1f1b16;
-  --muted: #6f675e;
-  --accent: #2e6b57;
-  --accent-tint: #e2efe8;
-  --warning: #9a5b0f;
-  --warning-tint: #fcf1de;
-  --heat-0: #efebe5;
-  --heat-1: #cfe5da;
-  --heat-2: #8cc2a8;
-  --heat-3: #4e9a7a;
-  --heat-4: #2e6b57;
+  color-scheme: light dark;
+
+  --bg: light-dark(#faf8f5, #151311);
+  --surface: light-dark(#ffffff, #1e1b18);
+  --border: light-dark(#e7e2da, #35302a);
+  --ink: light-dark(#1f1b16, #f1ece5);
+  --muted: light-dark(#6f675e, #a79e93);
+  --accent: light-dark(#2e6b57, #6cbf9c);
+  /* Text and icons on solid accent, heat-3/4 and destructive fills. */
+  --on-accent: light-dark(#ffffff, #10201a);
+  --accent-tint: light-dark(#e2efe8, #1e3a2f);
+  --warning: light-dark(#9a5b0f, #e3a857);
+  --warning-tint: light-dark(#fcf1de, #3a2b15);
+  --heat-0: light-dark(#efebe5, #2a2622);
+  --heat-1: light-dark(#cfe5da, #1f3d31);
+  --heat-2: light-dark(#8cc2a8, #2e6b57);
+  --heat-3: light-dark(#4e9a7a, #4e9a7a);
+  --heat-4: light-dark(#2e6b57, #8cc2a8);
+  /* Dialog backdrop. */
+  --scrim: light-dark(rgb(31 27 22 / 0.4), rgb(0 0 0 / 0.6));
 
   /* shadcn/ui semantic variables, mapped onto the tokens above. */
   --background: var(--bg);
@@ -25,12 +33,12 @@
   --popover: var(--surface);
   --popover-foreground: var(--ink);
   --primary: var(--accent);
-  --primary-foreground: var(--surface);
+  --primary-foreground: var(--on-accent);
   --secondary: var(--surface);
   --secondary-foreground: var(--ink);
   --muted-foreground: var(--muted);
   --accent-foreground: var(--accent);
-  --destructive: #b42318;
+  --destructive: light-dark(#b42318, #f97066);
   --input: var(--border);
   --ring: var(--accent);
 }
@@ -44,6 +52,7 @@
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
   --color-accent-tint: var(--accent-tint);
   --color-warning: var(--warning);
   --color-warning-tint: var(--warning-tint);
@@ -52,6 +61,7 @@
   --color-heat-2: var(--heat-2);
   --color-heat-3: var(--heat-3);
   --color-heat-4: var(--heat-4);
+  --color-scrim: var(--scrim);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -83,6 +93,13 @@
   --text-body: 16px;
   --text-label: 13px;
   --text-meta: 12px;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+}
+[data-theme='dark'] {
+  color-scheme: dark;
 }
 
 @layer base {

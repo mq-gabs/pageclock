@@ -18,7 +18,7 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content>) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-ink/40" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-scrim" />
       <DialogPrimitive.Content
         className={cn(
           'fixed inset-0 z-50 flex flex-col gap-5 overflow-y-auto bg-surface px-5 pt-6 pb-5 focus:outline-none',

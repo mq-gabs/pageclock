@@ -4,13 +4,13 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-button font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-5 [&_svg]:shrink-0',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-button font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-5 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
         primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
         secondary: 'border border-border bg-secondary text-secondary-foreground hover:bg-bg',
-        destructive: 'bg-destructive text-surface hover:bg-destructive/90',
+        destructive: 'bg-destructive text-on-accent hover:bg-destructive/90',
       },
       size: {
         // Figma Button: 14px vertical / 20px horizontal padding, 16px semibold.

@@ -150,6 +150,8 @@ The design is in [Figma: Reading Tracker — MVP](https://www.figma.com/design/E
 | warning-tint    | #FCF1DE                                     | Page-check banner                          |
 | heat-0 … heat-4 | #EFEBE5, #CFE5DA, #8CC2A8, #4E9A7A, #2E6B57 | Calendar: 0, 1–44, 45–59, 60–79, 80+ pages |
 
+**Dark theme:** every token also has a dark value (`light-dark()` in `globals.css`), plus `on-accent` (text on solid accent, heat-3/4 and destructive fills) and `scrim` (dialog backdrop). Settings › Appearance picks System, Light or Dark, saved per device.
+
 Radii: 14 cards, 12 buttons and banners, 10 inputs, 6 calendar cells. Text sizes: 32/28 page titles, 22–24 section titles, 16 body, 13 labels, 12 meta.
 
 **Components** (shadcn/ui where one exists): Button (primary, secondary), Chip (default, active), BookCover, BookRow, StatCard, Field (label, input, helper), PageCheckBanner, PeriodSwitcher, PagesBarChart, ReadingCalendar, BottomNav, Sidebar.
@@ -166,7 +168,7 @@ Radii: 14 cards, 12 buttons and banners, 10 inputs, 6 calendar cells. Text sizes
 | /read             | Timer          | Elapsed time, start page field, Pause, Stop                                              |
 | /read/finish      | Finish session | End page, pages/time/speed summary, Save (dialog on desktop)                             |
 | /stats            | Stats          | Week/Month/Year switcher, 4 totals, pages-per-day bars, reading-days calendar, streaks   |
-| /settings         | Settings       | Profile (name, nick), change password, backup download/import, sign out                  |
+| /settings         | Settings       | Profile (name, nick), change password, backup download/import, theme, sign out           |
 | /sign-in          | Sign in        | Nick, password; link to Create account (no nav)                                          |
 | /create-account   | Create account | Name, nick, password (no nav)                                                            |
 

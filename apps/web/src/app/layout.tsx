@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { AppShell } from '@/components/app-shell';
+import { themeScript } from '@/lib/theme-script';
 import { Providers } from './providers';
 import './globals.css';
 
@@ -13,7 +14,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    // The theme script sets `data-theme` before hydration.
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body>
         <Providers>
           <AppShell>{children}</AppShell>

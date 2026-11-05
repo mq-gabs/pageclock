@@ -13,7 +13,7 @@ export function BookRow({ book, className }: { book: BookWithProgress; className
       href={`/books/${book.id}`}
       className={cn(
         'flex items-center gap-3.5 rounded-card border border-border bg-surface p-3 transition-colors hover:border-muted/40',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
         className,
       )}
     >

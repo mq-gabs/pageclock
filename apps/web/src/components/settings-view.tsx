@@ -9,6 +9,8 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { backupErrorLines, backupFileName, importSummary } from '@/lib/backup';
 import { setApiErrors } from '@/lib/form-errors';
+import { setThemePreference, useThemePreference } from '@/lib/theme';
+import type { ThemePreference } from '@/lib/theme-script';
 import {
   fetchBackup,
   useChangePassword,
@@ -18,6 +20,7 @@ import {
   useUpdateProfile,
 } from '@/lib/queries';
 import { Field } from './field';
+import { SegmentedControl } from './segmented-control';
 import { Skeleton } from './skeletons';
 import { ErrorState } from './states';
 
@@ -286,6 +289,33 @@ function BackupCard() {
   );
 }
 
+const themeOptions: { value: ThemePreference; label: string }[] = [
+  { value: 'system', label: 'System' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+];
+
+/** Light or dark colors, saved on this device. */
+function AppearanceCard() {
+  const theme = useThemePreference();
+  return (
+    <section className={card} aria-labelledby="appearance-heading">
+      <SectionHeading
+        id="appearance-heading"
+        title="Appearance"
+        description="Choose light or dark colors on this device. System follows your device setting."
+      />
+      <SegmentedControl
+        label="Theme"
+        options={themeOptions}
+        value={theme}
+        onChange={setThemePreference}
+        className="self-start"
+      />
+    </section>
+  );
+}
+
 function SignOutCard() {
   const signOut = useSignOut();
   return (
@@ -343,6 +373,7 @@ export function SettingsView() {
             <BackupCard />
           </>
         )}
+        <AppearanceCard />
         <SignOutCard />
       </div>
     </main>
