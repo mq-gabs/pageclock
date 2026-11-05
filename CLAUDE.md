@@ -1,10 +1,47 @@
 # Pageclock
 
-`SPEC.md` is the source of truth. Build in the order of its Build plan.
+Add books, log reading sessions (timer or manual form), and see reading speed and how much and on which days you read. Every user has an account and sees only their own data.
+
+## Scope
+
+- **Books:** add (title, author, total pages), edit, delete; status Want to read, Reading, Finished.
+- **Sessions:** start/stop timer or manual form (date, start time, end time, start page, end page); edit, delete.
+- **Stats:** pages and minutes by week, month and year; average speed; reading-days calendar; current and longest streak.
+- **Accounts:** create account (name, unique nick, password), sign in/out. Settings changes name, nick and password (current password checked first).
+- **Backup:** download books and finished sessions as JSON and import it back. Import merges: same title + author (ignoring case) reuses the book, an identical session (same book, times, pages) is skipped, so importing twice adds nothing. Sessions must pass rule 2 against the book they land on; warnings aren't checked. One invalid entry rejects the whole file.
+- **Later (not MVP, don't build):** ISBN lookup, tags, re-reads, goals, password reset, real book covers, hosting.
+
+## Metrics
+
+- Pages read = end page − start page + 1. Minutes = end − start, minus paused time.
+- Speed = total pages ÷ total minutes × 60 (pages/hour).
+- Reading day = a date with at least one session, counted on the session's start date.
+
+## Business rules
+
+Pure functions in `packages/shared` with unit tests; the API is the final authority. Code comments cite these numbers.
+
+1. **Auto start page.** For book B at time t: end page + 1 of B's latest session that started before t (capped at total pages), 1 if none. Used by the timer and the form; the form recomputes it when date or start time changes. The user can override it.
+2. **Hard validation (HTTP 400):** ended after started, not in the future, duration ≤ 12 h; start page ≥ 1, end page ≥ start page, end page ≤ total pages.
+3. **Page check (warn, don't block).** Compare session S with B's sessions just before (prev) and after (next) by start time, excluding S. Gap: `S.startPage > prev.endPage + 1` (skipped pages). Overlap: `S.startPage ≤ prev.endPage` (pages counted twice). Same checks between `S.endPage` and `next.startPage`. A time overlap with any other session also warns. Each warning carries a suggested fix (e.g. start page 175 after a session ending on 174).
+4. **Confirming warnings.** Create/update/stop return 409 `{ warnings }` unless the body has `confirmWarnings: true`.
+5. **Timer.** At most one running session (`ended_at` null). Pause sets `paused_at`; resume adds the pause to `paused_seconds`. Stop needs the end page and runs rules 2–4. The timer is loaded from the API, so it survives reloads and device switches.
+6. **Status.** New books are want_to_read; the first saved session moves them to reading. A session reaching the last page makes the UI offer "Mark as finished" (sets `finished_at`). The user can change status any time.
+7. **Progress** = max end page over the book's sessions (0 if none); percent = round(progress ÷ total pages × 100).
+8. **Time and days.** Timestamps stored in UTC and grouped by UTC date of `started_at`; weeks start Monday. Grouping happens in TypeScript, not SQL.
+
+API errors use `{ error: { code, message, fields? } }`; warnings use `{ warnings: [{ code, message, suggestion? }] }`. Pages read, duration and speed are computed, never stored.
+
+## UI
+
+- Design: [Figma: Reading Tracker — MVP](https://www.figma.com/design/ECaJc1tChpojQBzLMEonwo) (390 px mobile, 1440 px desktop, plus a Components frame); read it through the Figma MCP server and match spacing and type.
+- Below 1024 px: mobile layout with a bottom tab bar (Library, Read, Stats). From 1024 px: 240 px left sidebar with a "Now reading" card.
+- Calendar heat levels: heat-0 … heat-4 = 0, 1–44, 45–59, 60–79, 80+ pages.
+- BookCover always shows the "missing image" state (2:3 box in heat-0, centered muted book icon, border); sizes sm (48 px, rows) and lg (140 px, Book page), optional `src` for later.
+- Routes: `/library`, `/books/[id]`, `/books/[id]/log`, `/read`, `/read/finish`, `/stats`, `/settings`, `/sign-in`, `/create-account`; `/` redirects to `/library`.
 
 ## Conventions
 
-- Work one Build plan milestone at a time; finish its checks before starting the next.
 - TypeScript strict mode; no `any`. Validate every request body and query with the shared Zod schemas.
 - Business rules and stats math live only in `packages/shared` as pure functions; routes call services, services call shared rules.
 - Every rule and stats function gets Vitest tests, including edge cases (no sessions, gaps, overlaps, sessions near midnight in America/Fortaleza).

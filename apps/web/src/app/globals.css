@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Design tokens (SPEC.md › UI › Design tokens). Components use the Tailwind names, never raw hex.
+/* Design tokens. Components use the Tailwind names, never raw hex.
    Each token is light-dark(light, dark); `color-scheme` picks one. It follows the OS unless
    `<html data-theme>` (lib/theme.ts, chosen in Settings) forces light or dark. */
 :root {

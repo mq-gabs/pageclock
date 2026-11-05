@@ -7,7 +7,7 @@
 
 Track the books you read, log reading sessions with a timer or by hand, and see your pages, reading time, speed, reading days and streaks.
 
-It's a single-user app that runs on your machine: a Next.js web app, an Express API and a SQLite file, in an Nx monorepo with a single root `package.json` (pnpm). [SPEC.md](SPEC.md) describes the product and its rules.
+It's a single-user app that runs on your machine: a Next.js web app, an Express API and a SQLite file, in an Nx monorepo with a single root `package.json` (pnpm). [CLAUDE.md](CLAUDE.md) describes the product, its rules and the project conventions.
 
 ## Requirements
 

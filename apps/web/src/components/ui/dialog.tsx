@@ -10,7 +10,7 @@ const DialogClose = DialogPrimitive.Close;
 const DialogTitle = DialogPrimitive.Title;
 const DialogDescription = DialogPrimitive.Description;
 
-/** Full screen below 1024 px, a centered card from 1024 px (SPEC › UI › Breakpoints). */
+/** Full screen below 1024 px, a centered card from 1024 px. */
 function DialogContent({
   className,
   children,
