@@ -76,11 +76,11 @@ importers:
         version: 4.6.7
     devDependencies:
       '@nx/eslint-plugin':
-        specifier: ^24.0.2
-        version: 24.0.2(@babel/traverse@7.29.10(supports-color@7.2.0))(@typescript-eslint/parser@8.72.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(nx@24.0.2)(supports-color@7.2.0)(typescript@6.0.3)
+        specifier: ^24.0.5
+        version: 24.0.5(@babel/traverse@7.29.10(supports-color@7.2.0))(@typescript-eslint/parser@8.72.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(nx@24.0.5)(supports-color@7.2.0)(typescript@6.0.3)
       '@nx/js':
-        specifier: ^24.0.2
-        version: 24.0.2(@babel/traverse@7.29.10(supports-color@7.2.0))(nx@24.0.2)(supports-color@7.2.0)
+        specifier: ^24.0.5
+        version: 24.0.5(@babel/traverse@7.29.10(supports-color@7.2.0))(nx@24.0.5)(supports-color@7.2.0)
       '@tailwindcss/postcss':
         specifier: ^4.3.3
         version: 4.3.3
@@ -109,11 +109,11 @@ importers:
         specifier: ^9.39.5
         version: 9.39.5(jiti@2.7.0)(supports-color@7.2.0)
       eslint-config-next:
-        specifier: ^16.4.3
-        version: 16.4.3(@typescript-eslint/parser@8.72.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
+        specifier: ^16.4.6
+        version: 16.4.6(@typescript-eslint/parser@8.72.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
       nx:
-        specifier: ^24.0.2
-        version: 24.0.2
+        specifier: ^24.0.5
+        version: 24.0.5
       prettier:
         specifier: ^3.9.10
         version: 3.9.10
@@ -1516,8 +1516,8 @@ packages:
   '@next/env@16.4.3':
     resolution: {integrity: sha512-a7tz1QCcWWkwC/rPJcPMJk/UNRu9CFhDd3OHYE5hddbJrs8BqRTalxI6GlKCWEGzRLHN+S/B7a4PAHCtm25aBQ==}
 
-  '@next/eslint-plugin-next@16.4.3':
-    resolution: {integrity: sha512-oxuC06wt/71h6ACYCV9GbKOfnf5a7VlRe/p80YHTut15TNgDEmynDnaq8t/xhy5rlvk7dhItIPs6H3rvIM4kyw==}
+  '@next/eslint-plugin-next@16.4.6':
+    resolution: {integrity: sha512-HdqERVOafOD8JaUSAkwf9aSu/1rsHlkN8C5GcXYBH3C/z1MxBhZFxB5rz/xqMMRiIj7r9tIv8OCLQ9JWUxCvWA==}
 
   '@next/swc-darwin-arm64@16.4.3':
     resolution: {integrity: sha512-4yq5EXBt+VDtAZwTyfijaFp5D2C5oz3Ikw5a2kiX2K9nw72vrZX2q5UuAlkPtUMO1tQz6JTKpaKWjS7OOefTDQ==}
@@ -1591,13 +1591,13 @@ packages:
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
 
-  '@nx/devkit@24.0.2':
-    resolution: {integrity: sha512-G2YWq9/Pj87Y20WCf6Clu1m9sTeoYcXCpivBo/I2foKVG1oOdOzMq966Na3eQ+ZdO0NneyBZvzoDYa6kJIufVw==}
+  '@nx/devkit@24.0.5':
+    resolution: {integrity: sha512-mXDYdlPQi3f3OukZsqqmwKO0Gkv9k+r1I6jctF5QXaYB7o5JT7n9wYO30CKQ938k9t8WPfaWRU4kioaoWX3uDw==}
     peerDependencies:
       nx: '>= 23 <= 25 || ^24.0.0-0'
 
-  '@nx/eslint-plugin@24.0.2':
-    resolution: {integrity: sha512-AnYR3fkurbVUNeZRo6+trbRNWENAOfgfUl5iSvJVzo/eZBQuv5zdiNtZwYJdTPLjMxdEnVp2nYNpumAlvQJCSA==}
+  '@nx/eslint-plugin@24.0.5':
+    resolution: {integrity: sha512-pWx/q//Mp7HN4ObtWv4HJsFCK2l0WhrM9PQwapALaRIDPT1G6WBcQr5cz03xMFN+OR3Kv96HeGU0YVBuTeTWfg==}
     peerDependencies:
       '@typescript-eslint/parser': ^8.0.0
       eslint-config-prettier: ^10.0.0
@@ -1607,8 +1607,8 @@ packages:
       eslint-config-prettier:
         optional: true
 
-  '@nx/js@24.0.2':
-    resolution: {integrity: sha512-+Rl7UxgBKTwDbdqVSmkZjlnP6D5hvtT6++G/sOAEtoIJvPSoR0YqM/SkibHRAxUCp0DBjS+VOTh+sXW9OaPlFA==}
+  '@nx/js@24.0.5':
+    resolution: {integrity: sha512-QoM31DBUmvXBWujHDPLN77e2/31D4GkQTdCziy5cNev+ZoPwLTUDEdxUlccKMJtSH79i0VP8E65wPoXI2D1nsg==}
     peerDependencies:
       '@swc/cli': '>=0.6.0 <0.9.0'
       verdaccio: ^6.0.5
@@ -1618,62 +1618,62 @@ packages:
       verdaccio:
         optional: true
 
-  '@nx/nx-darwin-arm64@24.0.2':
-    resolution: {integrity: sha512-UXiD8QtdWPsoVXMkdFnuMtw2FoaF3kPiNcKvX4dv956YK6vuL8lafxvikADqjwlRlFhKAci+ePzpbjJDNsQBiA==}
+  '@nx/nx-darwin-arm64@24.0.5':
+    resolution: {integrity: sha512-9PjlxLE/EUoqHeply47177Pj3uUzfeitHGb/BaxQsQxuYckccWtfzXPnfyvfhTovDL/h8Tik2WBS6oObNh/YAg==}
     cpu: [arm64]
     os: [darwin]
 
-  '@nx/nx-darwin-x64@24.0.2':
-    resolution: {integrity: sha512-7YnPf0OqiF1ph2y3bI5BDuO101Yg6rg8noT4bKFZxdMROJs3OKr1sKyRdqSl8vAxCa+NJ2A6IjB1FWf1GGL2VA==}
+  '@nx/nx-darwin-x64@24.0.5':
+    resolution: {integrity: sha512-dGwwlyWtuQxAbcXyC1+mdSBdJal4oT3eat6v/ObLkuV9T7rA9LuhLKemzJjXrxHgU2OAWT9RioEIfc1jjzsKYw==}
     cpu: [x64]
     os: [darwin]
 
-  '@nx/nx-freebsd-x64@24.0.2':
-    resolution: {integrity: sha512-iAzv/voFRCUNetQ22JkkdTsRwCv/fkhbPexnCioPs9Sc5cD65IdkJnnioNiaE482DhKJeVHIwABpe6soEDmS4w==}
+  '@nx/nx-freebsd-x64@24.0.5':
+    resolution: {integrity: sha512-j577U7wxQGJMXyXXQyuJIc2LBwjHwpElDdFgqamoQjTnoYoJWUtYW5AHzqTma9DMu++PvXLfQzg/j42pkJZH4A==}
     cpu: [x64]
     os: [freebsd]
 
-  '@nx/nx-linux-arm-gnueabihf@24.0.2':
-    resolution: {integrity: sha512-SymvR6WFm61wGrosjzYb7PgzNPH0la/wWRM6uzh5DIBfQqDfVe7FsIWU2quZdPWkiuo3ZgDiA1qqbQ0L3y0sug==}
+  '@nx/nx-linux-arm-gnueabihf@24.0.5':
+    resolution: {integrity: sha512-ANRCi1N5D6MLBZ3Jf9tqUlOyr1DnOsqPRqJrRbmIJlpElEndawL02HeE/BrJT9sP/Tu1Tt4uQs+/x1TJD1SVjQ==}
     cpu: [arm]
     os: [linux]
 
-  '@nx/nx-linux-arm64-gnu@24.0.2':
-    resolution: {integrity: sha512-qq7JbQzpx1ZkwLP5fNWDNY8irgcHN5zdc7nnJ3wmrs42i9LmA8wqxQvXaZaKZCTRTVNNPNZhH90SpOceTMYGZg==}
+  '@nx/nx-linux-arm64-gnu@24.0.5':
+    resolution: {integrity: sha512-+UUfUOqqel1f3Qls1H6LYaBD+h72dElbl21mo+8m7D271QJBPrqWLf6hB+KhIVLj+n/Jreg9fSA92j9VSKr0xQ==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@nx/nx-linux-arm64-musl@24.0.2':
-    resolution: {integrity: sha512-ddqQ/KMnjEdbkRVgG9o2myyJpsERV0+wOGPzBKRQc8GGac1gOIpP16dMpvxdGH8TV5gSk4PCNxbkeoEjyzsZ5A==}
+  '@nx/nx-linux-arm64-musl@24.0.5':
+    resolution: {integrity: sha512-jTuuza0fhv3CA6avIVkjm5XttFmJP2p28zDzMXvHSdNga56k7BaZekSHiSQyv1Y5ot6LCalSsimuyXVMfgcyAQ==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@nx/nx-linux-x64-gnu@24.0.2':
-    resolution: {integrity: sha512-kI5ee7+jIgRVghc5Mfo9LeCaukVCGx5k2ObRBpA76SP1NT22PmdZcB6LsNj4Syr0DWdCw+ldPp0MSQKqjq3W7w==}
+  '@nx/nx-linux-x64-gnu@24.0.5':
+    resolution: {integrity: sha512-B9FXZuMkXXGoFEZiPtx81VAigRF5/9DrXTOFHG419QXM3Dz3BsCMP8rwowcz+WbXzw0+DNKm8tIKE5wEBsYuVA==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@nx/nx-linux-x64-musl@24.0.2':
-    resolution: {integrity: sha512-1PUtv4KDxgsEd7Uc/eNnFpFZ3RiN3sEyMQJ+sDJIGZedChY3qbJYgNfX/8WfEILGCSrRnGQuEvZo2+DV7pcZ9A==}
+  '@nx/nx-linux-x64-musl@24.0.5':
+    resolution: {integrity: sha512-zrykHhL2yvHfpdzGCSdlTc2gGQZXNtut9/agF2b30JbDqXH9RIyVGg2su2/Su69OQuDuAEYfM8rGMYQdY2fV5w==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@nx/nx-win32-arm64-msvc@24.0.2':
-    resolution: {integrity: sha512-vuX8/T2wEJsQwks8kmGQhy+zFQfIRPIMJImifX+o5bPFd3fdHPsAvIjPVoBfq29S/RKqzYGZBevWDibqllIYyw==}
+  '@nx/nx-win32-arm64-msvc@24.0.5':
+    resolution: {integrity: sha512-GIkAmdDfPiYF3VPJP+GeXNH6fv5yvP9o8h6aV0Utc6Sws0a0T8ZTwczUTaWm3+R1ELqcBvjR+739wnKBWegkmQ==}
     cpu: [arm64]
     os: [win32]
 
-  '@nx/nx-win32-x64-msvc@24.0.2':
-    resolution: {integrity: sha512-bGfkGqJaD1diC85SF4Qjs6CR0pBDA0zklgF5iJk42EFhhOcxsDvvMUnb22iF12xPmsEM3Akpv4UoNXbn6t0NYw==}
+  '@nx/nx-win32-x64-msvc@24.0.5':
+    resolution: {integrity: sha512-uwZ5cJ8DviPXRDkSeTdJsiOvYFaQ3fqdnBaJBt3nR3eveCLePyGJLMWzUQoaYcEKJAzI5MPOsXstlY3zMihWeA==}
     cpu: [x64]
     os: [win32]
 
-  '@nx/workspace@24.0.2':
-    resolution: {integrity: sha512-1eaDTFF7uLU24TYQxyQ/QSj/mmAF1ecsoZF91XCDS+lFL6YGpbZoywVaHWGQLcsAkscsuDDgy3KiokZYs4MAIQ==}
+  '@nx/workspace@24.0.5':
+    resolution: {integrity: sha512-NFJZsfe/5F9OOJLQdeSXTZ+IrIWHwDRqWkBAnQgW3iEPa41G+40PPaZs0HAGlisDxNQ91IpUilhHxNJnfDKjAQ==}
 
   '@oxc-project/types@0.155.0':
     resolution: {integrity: sha512-SeE8JPwW1xs1tHeNycjUtUBdhorRa8o4jlvjwk49R7/Z291i+4DQa7JJIgOm/TaYQZx+QrPQbVJ/9c8dMIZN8Q==}
@@ -3205,8 +3205,8 @@ packages:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
 
-  eslint-config-next@16.4.3:
-    resolution: {integrity: sha512-j9IqBma6abp800frdUURaizYMgXOK+jNGyq6CsYcM9AxpSJs5D/TgMNGeAmRUilZvA7g9V1Tr71gNg9/SVTuMQ==}
+  eslint-config-next@16.4.6:
+    resolution: {integrity: sha512-IBGGrVf9E6pL0NGL0hmeicVGeSyv1VEzIWq6IecDqkw+YFByhEtDJS9u1r6s6a1VxK6rssh69KyNFQUgfaacqw==}
     peerDependencies:
       eslint: '>=9.0.0'
       typescript: '>=3.3.1'
@@ -4126,8 +4126,8 @@ packages:
     resolution: {integrity: sha512-S48WzZW777zhNIrn7gxOlISNAqi9ZC/uQFnRdbeIHhZhCA6UqpkOT8T1G7BvfdgP4Er8gF4sUbaS0i7QvIfCWw==}
     engines: {node: '>=8'}
 
-  nx@24.0.2:
-    resolution: {integrity: sha512-8iM4TsVVVJBVgvEiPF4kYoiTB7W0TM+YO8SzPwTZOY+mRGz4lOF4gAJ/0uLIfMzbYGErHNVxG/DkxtO8ZE838g==}
+  nx@24.0.5:
+    resolution: {integrity: sha512-w4a4GvCfcjcF2TBULFTCVpv3MbEpG/oXOQCT6kuQepW3Psu4hOccBhVL0kdP6cG5xyvtz/AM76nMxNVOlMm/2w==}
     hasBin: true
     peerDependencies:
       '@swc-node/register': ^1.11.1
@@ -4248,10 +4248,6 @@ packages:
   picomatch@2.3.2:
     resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
     engines: {node: '>=8.6'}
-
-  picomatch@4.0.4:
-    resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
-    engines: {node: '>=12'}
 
   picomatch@4.0.7:
     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
@@ -4629,9 +4625,6 @@ packages:
     resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
     engines: {node: '>=0.10.0'}
 
-  source-map-support@0.5.19:
-    resolution: {integrity: sha512-Wonm7zOCIJzBGQdB+thsPar0kYuCIzYvxZwlBa87yi/Mdjv7Tip2cyVbLj5o0cFPN4EVkuTwb3GDDyUx2DGnGw==}
-
   source-map-support@0.5.21:
     resolution: {integrity: sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==}
 
@@ -4878,8 +4871,8 @@ packages:
   undici-types@8.9.0:
     resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
 
-  undici@7.29.0:
-    resolution: {integrity: sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw==}
+  undici@7.30.1:
+    resolution: {integrity: sha512-03KrMbjIFDWQR5RNPrSw3bd1r12JpyFQl9/yxjUbJtqkjmllqC5lFjZh6ujeuJCKr8EOQvRW872Oy/az+nLYxg==}
     engines: {node: '>=20.18.1'}
 
   unicode-canonical-property-names-ecmascript@2.0.1:
@@ -6343,7 +6336,7 @@ snapshots:
 
   '@next/env@16.4.3': {}
 
-  '@next/eslint-plugin-next@16.4.3(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))':
+  '@next/eslint-plugin-next@16.4.6(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))':
     dependencies:
       '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))
       fast-glob: 3.3.1
@@ -6390,19 +6383,19 @@ snapshots:
 
   '@nolyfill/is-core-module@1.0.39': {}
 
-  '@nx/devkit@24.0.2(nx@24.0.2)':
+  '@nx/devkit@24.0.5(nx@24.0.5)':
     dependencies:
       ejs: 5.0.1
       minimatch: 10.2.5
-      nx: 24.0.2
+      nx: 24.0.5
       semver: 7.8.5
       tslib: 2.8.1
       yargs-parser: 21.1.1
 
-  '@nx/eslint-plugin@24.0.2(@babel/traverse@7.29.10(supports-color@7.2.0))(@typescript-eslint/parser@8.72.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(nx@24.0.2)(supports-color@7.2.0)(typescript@6.0.3)':
+  '@nx/eslint-plugin@24.0.5(@babel/traverse@7.29.10(supports-color@7.2.0))(@typescript-eslint/parser@8.72.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(nx@24.0.5)(supports-color@7.2.0)(typescript@6.0.3)':
     dependencies:
-      '@nx/devkit': 24.0.2(nx@24.0.2)
-      '@nx/js': 24.0.2(@babel/traverse@7.29.10(supports-color@7.2.0))(nx@24.0.2)(supports-color@7.2.0)
+      '@nx/devkit': 24.0.5(nx@24.0.5)
+      '@nx/js': 24.0.5(@babel/traverse@7.29.10(supports-color@7.2.0))(nx@24.0.5)(supports-color@7.2.0)
       '@phenomnomnominal/tsquery': 6.2.0(typescript@6.0.3)
       '@typescript-eslint/type-utils': 8.72.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
       '@typescript-eslint/utils': 8.72.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
@@ -6425,7 +6418,7 @@ snapshots:
       - typescript
       - verdaccio
 
-  '@nx/js@24.0.2(@babel/traverse@7.29.10(supports-color@7.2.0))(nx@24.0.2)(supports-color@7.2.0)':
+  '@nx/js@24.0.5(@babel/traverse@7.29.10(supports-color@7.2.0))(nx@24.0.5)(supports-color@7.2.0)':
     dependencies:
       '@babel/core': 7.29.7(supports-color@7.2.0)
       '@babel/plugin-proposal-decorators': 7.29.7(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)
@@ -6437,8 +6430,8 @@ snapshots:
       '@babel/preset-env': 7.29.7(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)
       '@babel/preset-typescript': 7.29.7(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)
       '@babel/runtime': 7.29.10
-      '@nx/devkit': 24.0.2(nx@24.0.2)
-      '@nx/workspace': 24.0.2
+      '@nx/devkit': 24.0.5(nx@24.0.5)
+      '@nx/workspace': 24.0.5
       '@zkochan/js-yaml': 0.0.7
       babel-plugin-const-enum: 1.2.0(@babel/core@7.29.7(supports-color@7.2.0))(supports-color@7.2.0)
       babel-plugin-macros: 3.1.0
@@ -6451,9 +6444,9 @@ snapshots:
       jsonc-parser: 3.3.1
       npm-run-path: 4.0.1
       picocolors: 1.1.1
-      picomatch: 4.0.4
+      picomatch: 4.0.7
       semver: 7.8.5
-      source-map-support: 0.5.19
+      source-map-support: 0.5.21
       tinyglobby: 0.2.17
       tslib: 2.8.1
     transitivePeerDependencies:
@@ -6463,43 +6456,43 @@ snapshots:
       - nx
       - supports-color
 
-  '@nx/nx-darwin-arm64@24.0.2':
+  '@nx/nx-darwin-arm64@24.0.5':
     optional: true
 
-  '@nx/nx-darwin-x64@24.0.2':
+  '@nx/nx-darwin-x64@24.0.5':
     optional: true
 
-  '@nx/nx-freebsd-x64@24.0.2':
+  '@nx/nx-freebsd-x64@24.0.5':
     optional: true
 
-  '@nx/nx-linux-arm-gnueabihf@24.0.2':
+  '@nx/nx-linux-arm-gnueabihf@24.0.5':
     optional: true
 
-  '@nx/nx-linux-arm64-gnu@24.0.2':
+  '@nx/nx-linux-arm64-gnu@24.0.5':
     optional: true
 
-  '@nx/nx-linux-arm64-musl@24.0.2':
+  '@nx/nx-linux-arm64-musl@24.0.5':
     optional: true
 
-  '@nx/nx-linux-x64-gnu@24.0.2':
+  '@nx/nx-linux-x64-gnu@24.0.5':
     optional: true
 
-  '@nx/nx-linux-x64-musl@24.0.2':
+  '@nx/nx-linux-x64-musl@24.0.5':
     optional: true
 
-  '@nx/nx-win32-arm64-msvc@24.0.2':
+  '@nx/nx-win32-arm64-msvc@24.0.5':
     optional: true
 
-  '@nx/nx-win32-x64-msvc@24.0.2':
+  '@nx/nx-win32-x64-msvc@24.0.5':
     optional: true
 
-  '@nx/workspace@24.0.2':
+  '@nx/workspace@24.0.5':
     dependencies:
-      '@nx/devkit': 24.0.2(nx@24.0.2)
+      '@nx/devkit': 24.0.5(nx@24.0.5)
       '@zkochan/js-yaml': 0.0.7
       chalk: 4.1.2
-      nx: 24.0.2
-      picomatch: 4.0.4
+      nx: 24.0.5
+      picomatch: 4.0.7
       semver: 7.8.5
       tslib: 2.8.1
       yargs-parser: 21.1.1
@@ -7914,9 +7907,9 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-config-next@16.4.3(@typescript-eslint/parser@8.72.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3):
+  eslint-config-next@16.4.6(@typescript-eslint/parser@8.72.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3):
     dependencies:
-      '@next/eslint-plugin-next': 16.4.3(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))
+      '@next/eslint-plugin-next': 16.4.6(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))
       eslint: 9.39.5(jiti@2.7.0)(supports-color@7.2.0)
       eslint-import-resolver-node: 0.3.10(supports-color@7.2.0)
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)
@@ -8863,7 +8856,7 @@ snapshots:
     dependencies:
       path-key: 3.1.1
 
-  nx@24.0.2:
+  nx@24.0.5:
     dependencies:
       '@clack/core': 1.4.3
       '@clack/prompts': 1.7.0
@@ -8943,7 +8936,7 @@ snapshots:
       tmp: 0.2.7
       tsconfig-paths: 4.2.0
       tslib: 2.8.1
-      undici: 7.29.0
+      undici: 7.30.1
       util-deprecate: 1.0.2
       wcwidth: 1.0.1
       which: 3.0.1
@@ -8954,16 +8947,16 @@ snapshots:
       yargs: 17.7.2
       yargs-parser: 21.1.1
     optionalDependencies:
-      '@nx/nx-darwin-arm64': 24.0.2
-      '@nx/nx-darwin-x64': 24.0.2
-      '@nx/nx-freebsd-x64': 24.0.2
-      '@nx/nx-linux-arm-gnueabihf': 24.0.2
-      '@nx/nx-linux-arm64-gnu': 24.0.2
-      '@nx/nx-linux-arm64-musl': 24.0.2
-      '@nx/nx-linux-x64-gnu': 24.0.2
-      '@nx/nx-linux-x64-musl': 24.0.2
-      '@nx/nx-win32-arm64-msvc': 24.0.2
-      '@nx/nx-win32-x64-msvc': 24.0.2
+      '@nx/nx-darwin-arm64': 24.0.5
+      '@nx/nx-darwin-x64': 24.0.5
+      '@nx/nx-freebsd-x64': 24.0.5
+      '@nx/nx-linux-arm-gnueabihf': 24.0.5
+      '@nx/nx-linux-arm64-gnu': 24.0.5
+      '@nx/nx-linux-arm64-musl': 24.0.5
+      '@nx/nx-linux-x64-gnu': 24.0.5
+      '@nx/nx-linux-x64-musl': 24.0.5
+      '@nx/nx-win32-arm64-msvc': 24.0.5
+      '@nx/nx-win32-x64-msvc': 24.0.5
 
   object-assign@4.1.1: {}
 
@@ -9087,8 +9080,6 @@ snapshots:
   picocolors@1.1.1: {}
 
   picomatch@2.3.2: {}
-
-  picomatch@4.0.4: {}
 
   picomatch@4.0.7: {}
 
@@ -9577,11 +9568,6 @@ snapshots:
 
   source-map-js@1.2.2: {}
 
-  source-map-support@0.5.19:
-    dependencies:
-      buffer-from: 1.1.2
-      source-map: 0.6.1
-
   source-map-support@0.5.21:
     dependencies:
       buffer-from: 1.1.2
@@ -9884,7 +9870,7 @@ snapshots:
 
   undici-types@8.9.0: {}
 
-  undici@7.29.0: {}
+  undici@7.30.1: {}
 
   unicode-canonical-property-names-ecmascript@2.0.1: {}
 

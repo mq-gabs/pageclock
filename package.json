@@ -35,8 +35,8 @@
     "shared:test": "nx run shared:test"
   },
   "devDependencies": {
-    "@nx/eslint-plugin": "^24.0.2",
-    "@nx/js": "^24.0.2",
+    "@nx/eslint-plugin": "^24.0.5",
+    "@nx/js": "^24.0.5",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/better-sqlite3": "^9.6.0",
     "@types/express": "^5.0.6",
@@ -46,8 +46,8 @@
     "@types/supertest": "^7.2.1",
     "drizzle-kit": "^0.31.11",
     "eslint": "^9.39.5",
-    "eslint-config-next": "^16.4.3",
-    "nx": "^24.0.2",
+    "eslint-config-next": "^16.4.6",
+    "nx": "^24.0.5",
     "prettier": "^3.9.10",
     "supertest": "^7.3.1",
     "tailwindcss": "^4.3.3",
