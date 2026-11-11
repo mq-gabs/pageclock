@@ -109,6 +109,8 @@ export const readingSessions = sqliteTable(
     startPage: integer('start_page').notNull(),
     endPage: integer('end_page'),
     source: text('source', { enum: sessionSources }).notNull(),
+    /** The last timer action applied (rule 5), so a retried action is recognised and skipped. */
+    lastOpId: text('last_op_id'),
     ...timestamps,
   },
   (t) => [

@@ -6,3 +6,4 @@ export * from './types';
 export * from './validate-session';
 export * from './timer';
 export * from './import-backup';
+export * from './timer-ops';

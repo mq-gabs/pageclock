@@ -162,11 +162,7 @@ function BookScreen({ id, onLog }: { id: string; onLog: (sessionId?: string) => 
             <AppLink href="/read">Open timer</AppLink>
           </Button>
         ) : (
-          <Button
-            className="flex-1"
-            disabled={timer.isPending || start.isPending}
-            onClick={() => start.start(book.id)}
-          >
+          <Button className="flex-1" disabled={start.disabled} onClick={() => start.start(book)}>
             Start reading
           </Button>
         )}
@@ -176,12 +172,6 @@ function BookScreen({ id, onLog }: { id: string; onLog: (sessionId?: string) => 
           </LocalLink>
         </Button>
       </div>
-
-      {start.error && (
-        <p role="alert" className="-mt-2 text-meta text-destructive">
-          {start.error.message}
-        </p>
-      )}
 
       <section aria-labelledby="sessions-heading" className="flex flex-col gap-3">
         <h2 id="sessions-heading" className="text-[17px] font-semibold text-ink">

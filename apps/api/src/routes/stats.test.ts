@@ -10,6 +10,7 @@ import { createApp } from '../app';
 import type { Db } from '../db/client';
 import { seed } from '../db/seed';
 import { authedAgent, createTestUser } from '../test/auth';
+import { startTimerBody } from '../test/timer';
 import { createTestDb } from '../test/db';
 
 /**
@@ -98,7 +99,7 @@ describe('GET /api/stats/summary', () => {
   it('ignores a running timer', async () => {
     const { books } = listBooksResponseSchema.parse((await api.get('/api/books')).body);
     const id = books.find((b) => b.title === 'Project Hail Mary')!.id;
-    await api.post('/api/timer/start').send({ bookId: id }).expect(201);
+    await api.post('/api/timer/start').send(startTimerBody(id)).expect(201);
     vi.setSystemTime(now.getTime() + 30 * 60_000);
     const s = statsSummaryResponseSchema.parse(
       (await api.get('/api/stats/summary?period=month')).body,

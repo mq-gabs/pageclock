@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { timerElapsedSeconds, type Timer } from '@reading-tracker/shared';
+import { timerElapsedSeconds, type LocalTimer } from '@reading-tracker/shared';
 import { Button } from '@/components/ui/button';
-import { ApiRequestError } from '@/lib/api';
 import { appTimeZone } from '@/lib/config';
 import { formatBookMeta, formatClock, formatShortDate, formatTime } from '@/lib/format';
-import { useBooks, usePauseTimer, useTimer, useUpdateTimer } from '@/lib/queries';
+import { useBooks, useTimer, useTimerActions } from '@/lib/queries';
+import { useTimerQueue } from '@/lib/timer-queue';
 import { useLocalDialog } from '@/lib/use-local-dialog';
 import { useNow } from '@/lib/use-now';
 import { useStartReading } from '@/lib/use-start-reading';
@@ -55,11 +55,12 @@ function TimerScreen({ onStop }: { onStop: () => void }) {
 }
 
 /** Figma "Timer": elapsed time, start page, Pause and Stop (a centered 560 px card on desktop). */
-function RunningTimer({ timer, onStop }: { timer: Timer; onStop: () => void }) {
+function RunningTimer({ timer, onStop }: { timer: LocalTimer; onStop: () => void }) {
   const { session, book, previous } = timer;
   const paused = session.pausedAt !== null;
   const now = useNow(!paused);
-  const pause = usePauseTimer();
+  const actions = useTimerActions();
+  const { pending } = useTimerQueue();
   const elapsed = timerElapsedSeconds(
     {
       startedAt: new Date(session.startedAt),
@@ -69,10 +70,10 @@ function RunningTimer({ timer, onStop }: { timer: Timer; onStop: () => void }) {
     now,
   );
 
-  // Stop asks for the end page right away and freezes the clock in the background (a paused
-  // timer ends when it was paused). If the pause fails, stopping still ends the session "now".
+  // Stop asks for the end page right away and pauses the timer, so the end is fixed at the
+  // click (a paused timer ends when it was paused) whenever the pause reaches the API.
   const stop = () => {
-    if (!paused) pause.mutate('pause');
+    if (!paused) actions.pause(session.id);
     onStop();
   };
 
@@ -100,39 +101,53 @@ function RunningTimer({ timer, onStop }: { timer: Timer; onStop: () => void }) {
             {paused ? 'Paused' : 'Running'} · started at{' '}
             {formatTime(session.startedAt, appTimeZone)}
           </p>
+          {pending > 0 && (
+            <p role="status" className="text-meta text-muted">
+              Syncing…
+            </p>
+          )}
         </div>
 
         <StartPageField key={session.startPage} timer={timer} previous={previous} />
 
-        {pause.error && (
-          <p role="alert" className="mt-3 text-meta text-destructive">
-            {pause.error.message}
-          </p>
-        )}
-
         <div className="mt-auto grid grid-cols-2 gap-2.5 pt-6 lg:mt-2 lg:gap-3 lg:pt-0">
           <Button
             variant="secondary"
-            disabled={pause.isPending}
-            onClick={() => pause.mutate(paused ? 'resume' : 'pause')}
+            onClick={() => (paused ? actions.resume(session.id) : actions.pause(session.id))}
           >
             {paused ? 'Resume' : 'Pause'}
           </Button>
-          <Button disabled={pause.isPending} onClick={stop}>
-            Stop
-          </Button>
+          <Button onClick={stop}>Stop</Button>
         </div>
       </div>
     </main>
   );
 }
 
-/** Rule 1's start page, editable while the timer runs; saved when the field loses focus. */
-function StartPageField({ timer, previous }: { timer: Timer; previous: Timer['previous'] }) {
+/**
+ * Rule 1's start page, editable while the timer runs; saved when the field loses focus. Until
+ * the API has the Start, rule 1's page is unknown and the field shows "…".
+ */
+function StartPageField({
+  timer,
+  previous,
+}: {
+  timer: LocalTimer;
+  previous: LocalTimer['previous'];
+}) {
   const { session, book } = timer;
-  const update = useUpdateTimer();
-  const [value, setValue] = useState(String(session.startPage));
+  const actions = useTimerActions();
+  const [value, setValue] = useState(session.startPage === null ? '' : String(session.startPage));
   const [error, setError] = useState<string>();
+
+  if (session.startPage === null) {
+    return (
+      <div className="mt-6 flex flex-col gap-1.5 lg:mt-5">
+        <Field label="Start page" value="" placeholder="…" disabled readOnly />
+        <p className="text-meta text-muted">Filled in once the server has your session.</p>
+      </div>
+    );
+  }
 
   const commit = () => {
     const page = Number(value);
@@ -141,15 +156,7 @@ function StartPageField({ timer, previous }: { timer: Timer; previous: Timer['pr
     if (page > book.totalPages) return setError(`The book has ${book.totalPages} pages`);
     setError(undefined);
     if (page === session.startPage) return;
-    update.mutate(
-      { startPage: page },
-      {
-        onError: (e) =>
-          setError(
-            e instanceof ApiRequestError ? (e.fields.startPage?.[0] ?? e.message) : e.message,
-          ),
-      },
-    );
+    actions.setStartPage(session.id, page);
   };
 
   const action = (
@@ -197,7 +204,6 @@ function StartPageField({ timer, previous }: { timer: Timer; previous: Timer['pr
 function StartPicker() {
   const { data, isPending, isError, refetch } = useBooks({});
   const start = useStartReading();
-  const [startingId, setStartingId] = useState<string>();
 
   // Books being read first, then the want-to-read list; finished books can't be re-read yet.
   const books = (data?.books ?? [])
@@ -210,12 +216,6 @@ function StartPicker() {
         <h1 className="text-title-sm font-bold text-ink lg:text-title">Read</h1>
         <p className="text-[14px] text-muted">Pick a book to start the timer.</p>
       </div>
-
-      {start.error && (
-        <p role="alert" className="text-meta text-destructive">
-          {start.error.message}
-        </p>
-      )}
 
       {isPending ? (
         <BookRowsSkeleton count={3} className="lg:grid-cols-2" />
@@ -248,14 +248,11 @@ function StartPicker() {
               <Button
                 size="compact"
                 className="px-4"
-                disabled={start.isPending}
+                disabled={start.disabled}
                 aria-label={`Start reading ${book.title}`}
-                onClick={() => {
-                  setStartingId(book.id);
-                  start.start(book.id);
-                }}
+                onClick={() => start.start(book)}
               >
-                {start.isPending && startingId === book.id ? 'Starting…' : 'Start'}
+                Start
               </Button>
             </li>
           ))}

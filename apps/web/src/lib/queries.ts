@@ -1,7 +1,9 @@
 'use client';
 
+import { useMemo } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  applyTimerOps,
   authResponseSchema,
   backupSchema,
   bookDetailSchema,
@@ -18,6 +20,7 @@ import {
   suggestedStartPageResponseSchema,
   timerResponseSchema,
   type AuthResponse,
+  type BookWithProgress,
   type ChangePasswordInput,
   type CheckSessionBody,
   type CreateBookInput,
@@ -26,17 +29,17 @@ import {
   type MeResponse,
   type SignInInput,
   type SignUpInput,
-  type StartTimerInput,
   type StatsPeriod,
   type StopTimerInput,
   type TimerResponse,
   type UpdateBookInput,
   type UpdateProfileInput,
   type UpdateSessionInput,
-  type UpdateTimerInput,
 } from '@reading-tracker/shared';
 import { api, apiNoContent } from './api';
 import { clearToken, setToken } from './auth-token';
+import { serverNow } from './server-clock';
+import { timerQueue, useTimerQueue } from './timer-queue';
 
 export const bookKeys = {
   all: ['books'] as const,
@@ -145,8 +148,8 @@ export function useDeleteSession() {
 
 export const timerKey = ['timer'] as const;
 
-/** Rule 5: the running timer comes from the API, so it survives reloads and device switches. */
-export function useTimer() {
+/** Rule 5: the running timer as the API last told us; it survives reloads and device switches. */
+function useServerTimer() {
   return useQuery({
     queryKey: timerKey,
     queryFn: () => api('GET', '/api/timer', timerResponseSchema),
@@ -154,50 +157,66 @@ export function useTimer() {
   });
 }
 
-/** Mutations that answer `{ timer }` put it straight into the cache. */
-function useTimerMutation<V>(mutationFn: (variables: V) => Promise<TimerResponse>) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn,
-    onSuccess: (data) => queryClient.setQueryData(timerKey, data),
-    // A 404/409 means the cached timer is stale (stopped or started on another device).
-    onError: () => queryClient.invalidateQueries({ queryKey: timerKey }),
-  });
+/**
+ * The running timer as this device shows it: the API's, with the actions still waiting in the
+ * timer queue applied, so a tap shows at once whatever the network does.
+ */
+export function useTimer() {
+  const query = useServerTimer();
+  const { ops } = useTimerQueue();
+  const data = useMemo(
+    () =>
+      query.data === undefined && ops.length === 0
+        ? undefined
+        : applyTimerOps(query.data ?? null, ops),
+    [query.data, ops],
+  );
+  return { ...query, data, isPending: query.isPending && ops.length === 0 };
 }
 
-export const useStartTimer = () =>
-  useTimerMutation((input: StartTimerInput) =>
-    api('POST', '/api/timer/start', timerResponseSchema, input),
-  );
+const newOp = () => ({ opId: crypto.randomUUID(), at: serverNow().toISOString() });
 
-export const useUpdateTimer = () =>
-  useTimerMutation((input: UpdateTimerInput) =>
-    api('PATCH', '/api/timer', timerResponseSchema, input),
+/**
+ * Timer actions (rule 5): each one goes into the timer queue and shows at once; the queue
+ * delivers it with the moment of the click (rule 5a). Nothing here waits for the network.
+ */
+export function useTimerActions() {
+  return useMemo(
+    () => ({
+      /** Starts a timer with a new session id; returns that id. */
+      start(book: BookWithProgress, startPage?: number) {
+        const sessionId = crypto.randomUUID();
+        timerQueue.enqueue({ kind: 'start', ...newOp(), sessionId, book, startPage });
+        return sessionId;
+      },
+      pause: (sessionId: string) => timerQueue.enqueue({ kind: 'pause', ...newOp(), sessionId }),
+      resume: (sessionId: string) => timerQueue.enqueue({ kind: 'resume', ...newOp(), sessionId }),
+      setStartPage: (sessionId: string, startPage: number) =>
+        timerQueue.enqueue({
+          kind: 'startPage',
+          opId: crypto.randomUUID(),
+          sessionId,
+          startPage,
+        }),
+      discard: (sessionId: string) =>
+        timerQueue.enqueue({ kind: 'discard', opId: crypto.randomUUID(), sessionId }),
+    }),
+    [],
   );
+}
 
-export const usePauseTimer = () =>
-  useTimerMutation((action: 'pause' | 'resume') =>
-    api('POST', `/api/timer/${action}`, timerResponseSchema),
-  );
-
-/** Stop with an end page. Throws `ApiWarningsError` on 409 until `confirmWarnings` is set. */
+/**
+ * Stop with an end page, once every waiting timer action has reached the API (decision 3: it
+ * needs the API's answer for rules 4 and 6). Throws `ApiWarningsError` on 409 until
+ * `confirmWarnings` is set.
+ */
 export function useStopTimer() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: StopTimerInput) =>
-      api('POST', '/api/timer/stop', saveSessionResponseSchema, input),
-    onSuccess: async () => {
-      queryClient.setQueryData<TimerResponse>(timerKey, { timer: null });
-      await queryClient.invalidateQueries({ queryKey: bookKeys.all });
+    mutationFn: async (input: StopTimerInput) => {
+      await timerQueue.flush();
+      return api('POST', '/api/timer/stop', saveSessionResponseSchema, input);
     },
-  });
-}
-
-/** Throw the running session away. */
-export function useDiscardTimer() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (sessionId: string) => apiNoContent('DELETE', `/api/reading-sessions/${sessionId}`),
     onSuccess: async () => {
       queryClient.setQueryData<TimerResponse>(timerKey, { timer: null });
       await queryClient.invalidateQueries({ queryKey: bookKeys.all });
@@ -272,6 +291,8 @@ export function useSignOut() {
   return useMutation({
     mutationFn: () => apiNoContent('POST', '/api/auth/sign-out').catch(() => undefined),
     onSettled: () => {
+      // Decision 2: actions still waiting are discarded on sign-out.
+      timerQueue.clear();
       clearToken();
       queryClient.clear();
     },

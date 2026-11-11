@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   startTimerSchema,
   stopTimerSchema,
+  timerActionSchema,
   updateTimerSchema,
   type TimerResponse,
 } from '@reading-tracker/shared';
@@ -33,19 +34,22 @@ export function timerRouter(db: Db) {
   });
 
   router.post('/start', (req, res) => {
-    const body: TimerResponse = {
-      timer: startTimer(db, userIdOf(req), parseBody(startTimerSchema, req.body)),
-    };
-    res.status(201).json(body);
+    const { timer, created } = startTimer(db, userIdOf(req), parseBody(startTimerSchema, req.body));
+    const body: TimerResponse = { timer };
+    res.status(created ? 201 : 200).json(body);
   });
 
   router.post('/pause', (req, res) => {
-    const body: TimerResponse = { timer: pauseTimer(db, userIdOf(req)) };
+    const body: TimerResponse = {
+      timer: pauseTimer(db, userIdOf(req), parseBody(timerActionSchema, req.body)),
+    };
     res.json(body);
   });
 
   router.post('/resume', (req, res) => {
-    const body: TimerResponse = { timer: resumeTimer(db, userIdOf(req)) };
+    const body: TimerResponse = {
+      timer: resumeTimer(db, userIdOf(req), parseBody(timerActionSchema, req.body)),
+    };
     res.json(body);
   });
 

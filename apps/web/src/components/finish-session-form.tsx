@@ -8,8 +8,8 @@ import {
   sessionMinutes,
   timerEndedAt,
   type ApiWarning,
+  type LocalTimer,
   type SaveSessionResponse,
-  type Timer,
   type WarningSuggestion,
 } from '@reading-tracker/shared';
 import { z } from 'zod';
@@ -18,13 +18,8 @@ import { DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { ApiRequestError, ApiWarningsError } from '@/lib/api';
 import { appTimeZone } from '@/lib/config';
 import { formatSessionDuration, formatSpeed, formatTime } from '@/lib/format';
-import {
-  checkSession,
-  useBook,
-  useDiscardTimer,
-  useStopTimer,
-  useUpdateTimer,
-} from '@/lib/queries';
+import { checkSession, useBook, useStopTimer, useTimerActions } from '@/lib/queries';
+import { useTimerQueue } from '@/lib/timer-queue';
 import { useNow } from '@/lib/use-now';
 import { Field } from './field';
 import { PageCheckBanner } from './page-check-banner';
@@ -50,7 +45,7 @@ const pageWarnings = (warnings: ApiWarning[]): ApiWarning[] =>
   );
 
 interface FinishSessionFormProps {
-  timer: Timer;
+  timer: LocalTimer;
   /** Back to the timer without saving. */
   onCancel: () => void;
   onDiscarded: () => void;
@@ -65,16 +60,21 @@ export function FinishSessionForm({
   onSaved,
 }: FinishSessionFormProps) {
   const { session, book } = timer;
+  // Null until the API has the Start (rule 1 runs there); Save waits for it anyway.
+  const startPage = session.startPage;
   const [discarding, setDiscarding] = useState(false);
   const schema = useMemo(
-    () => makeSchema(session.startPage, book.totalPages),
-    [session.startPage, book.totalPages],
+    () => makeSchema(startPage ?? 1, book.totalPages),
+    [startPage, book.totalPages],
   );
   const form = useForm<FormValues>({ resolver: zodResolver(schema) });
   const { errors } = form.formState;
   const endPage = useWatch({ control: form.control, name: 'endPage' });
   const stop = useStopTimer();
-  const updateTimer = useUpdateTimer();
+  const actions = useTimerActions();
+  const queue = useTimerQueue();
+  // Save first delivers the waiting timer actions (decision 3); the recorded times don't move.
+  const waitingForQueue = stop.isPending && queue.pending > 0 && queue.failures > 0;
   const bookStats = useBook(book.id).data?.stats;
 
   // Stop pauses the timer, so the end is fixed; if it still runs, it ends now.
@@ -87,16 +87,16 @@ export function FinishSessionForm({
   );
   const minutes = sessionMinutes({ startedAt, endedAt, pausedSeconds: session.pausedSeconds });
   const parsed = schema.safeParse({ endPage });
-  const pages = parsed.success ? parsed.data.endPage - session.startPage + 1 : null;
+  const pages = parsed.success && startPage !== null ? parsed.data.endPage - startPage + 1 : null;
   const speed = pages === null ? null : readingSpeed(pages, minutes);
 
   // Rule 3: check the pages live, as the Log session form does.
   const [warnings, setWarnings] = useState<ApiWarning[]>([]);
   const checkRun = useRef(0);
-  const validEndPage = parsed.success ? parsed.data.endPage : null;
+  const validEndPage = parsed.success && startPage !== null ? parsed.data.endPage : null;
   const endedAtIso = endedAt.toISOString();
   useEffect(() => {
-    if (validEndPage === null) return;
+    if (validEndPage === null || startPage === null) return;
     const run = ++checkRun.current;
     const delay = setTimeout(() => {
       checkSession({
@@ -104,7 +104,7 @@ export function FinishSessionForm({
         bookId: book.id,
         startedAt: session.startedAt,
         endedAt: endedAtIso,
-        startPage: session.startPage,
+        startPage,
         endPage: validEndPage,
       })
         .then((result) => {
@@ -116,7 +116,7 @@ export function FinishSessionForm({
     return () => clearTimeout(delay);
     // Re-check when the pages change, not on every tick of a running clock.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [book.id, session.id, session.startedAt, session.startPage, validEndPage, paused]);
+  }, [book.id, session.id, session.startedAt, startPage, validEndPage, paused]);
 
   const submit = (confirmWarnings: boolean) =>
     form.handleSubmit(async (data) => {
@@ -146,7 +146,7 @@ export function FinishSessionForm({
     if (suggestion.endPage !== undefined) {
       form.setValue('endPage', suggestion.endPage, { shouldValidate: true, shouldDirty: true });
     }
-    if (suggestion.startPage !== undefined) updateTimer.mutate({ startPage: suggestion.startPage });
+    if (suggestion.startPage !== undefined) actions.setStartPage(session.id, suggestion.startPage);
   };
 
   if (discarding) {
@@ -182,17 +182,17 @@ export function FinishSessionForm({
           type="number"
           inputMode="numeric"
           autoFocus
-          min={session.startPage}
+          min={startPage ?? 1}
           max={book.totalPages}
           error={errors.endPage?.message}
-          helper={`Started on page ${session.startPage}. Book has ${book.totalPages} pages.`}
+          helper={`Started on page ${startPage ?? '…'}. Book has ${book.totalPages} pages.`}
           {...form.register('endPage', { valueAsNumber: true })}
         />
         <div className="grid grid-cols-3 gap-2.5">
           <StatCard
             label="Pages"
             value={pages === null ? '—' : String(pages)}
-            sub={`${session.startPage} → ${parsed.success ? parsed.data.endPage : '…'}`}
+            sub={`${startPage ?? '…'} → ${parsed.success ? parsed.data.endPage : '…'}`}
           />
           <StatCard label="Time" value={formatSessionDuration(minutes)} sub="active" />
           <StatCard label="Speed" value={formatSpeed(speed)} sub={speedSub} />
@@ -206,9 +206,9 @@ export function FinishSessionForm({
         saving={stop.isPending}
       />
 
-      {(errors.root ?? updateTimer.error) && (
+      {errors.root && (
         <p role="alert" className="text-meta text-destructive">
-          {errors.root?.message ?? updateTimer.error?.message}
+          {errors.root.message}
         </p>
       )}
 
@@ -223,7 +223,7 @@ export function FinishSessionForm({
             Discard
           </Button>
           <Button type="submit" className="flex-1 lg:flex-none" disabled={stop.isPending}>
-            Save session
+            {waitingForQueue ? 'Waiting for connection…' : 'Save session'}
           </Button>
         </div>
         <button
@@ -244,12 +244,12 @@ function DiscardPrompt({
   onCancel,
   onDiscarded,
 }: {
-  timer: Timer;
+  timer: LocalTimer;
   minutes: number;
   onCancel: () => void;
   onDiscarded: () => void;
 }) {
-  const discard = useDiscardTimer();
+  const actions = useTimerActions();
   return (
     <div className="flex flex-1 flex-col gap-5">
       <div className="flex flex-col gap-1">
@@ -261,11 +261,6 @@ function DiscardPrompt({
           be undone.
         </DialogDescription>
       </div>
-      {discard.error && (
-        <p role="alert" className="text-meta text-destructive">
-          {discard.error.message}
-        </p>
-      )}
       <div className="mt-auto flex gap-2.5 lg:mt-2">
         <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>
           Keep session
@@ -274,11 +269,11 @@ function DiscardPrompt({
           type="button"
           variant="destructive"
           className="flex-1"
-          disabled={discard.isPending}
-          onClick={() =>
-            // mutateAsync: clearing the timer unmounts this form before mutate() callbacks run.
-            discard.mutateAsync(timer.session.id).then(onDiscarded, () => undefined)
-          }
+          onClick={() => {
+            // The timer disappears at once; the queue deletes the session on the API.
+            actions.discard(timer.session.id);
+            onDiscarded();
+          }}
         >
           Discard
         </Button>

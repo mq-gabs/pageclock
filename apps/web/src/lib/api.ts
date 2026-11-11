@@ -5,6 +5,7 @@ import {
 } from '@reading-tracker/shared';
 import type { z } from 'zod';
 import { clearToken, getToken } from './auth-token';
+import { noteServerDate } from './server-clock';
 
 /** A non-2xx response, carrying the API's `{ error: { code, message, fields } }` body. */
 export class ApiRequestError extends Error {
@@ -27,17 +28,29 @@ export class ApiWarningsError extends Error {
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-async function send(method: Method, path: string, body?: unknown): Promise<Response> {
+export interface ApiOptions {
+  /** Aborting counts as a network error (`network_error`). */
+  signal?: AbortSignal;
+}
+
+async function send(
+  method: Method,
+  path: string,
+  body?: unknown,
+  options: ApiOptions = {},
+): Promise<Response> {
   const token = getToken();
   const headers: Record<string, string> = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (token) headers.Authorization = `Bearer ${token}`;
   let res: Response;
+  const sentAt = Date.now();
   try {
     res = await fetch(path, {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
+      signal: options.signal,
     });
   } catch {
     // fetch only rejects when no response arrives (offline, API down, CORS).
@@ -47,6 +60,7 @@ async function send(method: Method, path: string, body?: unknown): Promise<Respo
       'Can’t reach the server. Check your connection and try again.',
     );
   }
+  noteServerDate(res.headers.get('Date'), sentAt, Date.now());
   if (res.ok) return res;
   // The token expired or was revoked: forget it, and the app goes back to sign in. Only when
   // this token was the one refused, so a wrong password at sign-in doesn't sign anyone out.
@@ -76,12 +90,18 @@ export async function api<S extends z.ZodType>(
   path: string,
   schema: S,
   body?: unknown,
+  options?: ApiOptions,
 ): Promise<z.infer<S>> {
-  const res = await send(method, path, body);
+  const res = await send(method, path, body, options);
   return schema.parse(await res.json());
 }
 
 /** Calls an endpoint that answers 204 No Content. */
-export async function apiNoContent(method: Method, path: string, body?: unknown): Promise<void> {
-  await send(method, path, body);
+export async function apiNoContent(
+  method: Method,
+  path: string,
+  body?: unknown,
+  options?: ApiOptions,
+): Promise<void> {
+  await send(method, path, body, options);
 }

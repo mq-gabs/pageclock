@@ -1,22 +1,20 @@
 'use client';
 
-import { ApiRequestError } from './api';
+import type { BookWithProgress } from '@reading-tracker/shared';
 import { useAppRouter } from './navigation-progress';
-import { useStartTimer } from './queries';
+import { useTimer, useTimerActions } from './queries';
 
-/** "Start reading": start the timer for a book (rule 1 picks the start page) and open /read. */
+/**
+ * "Start reading": start the timer for a book and open /read at once; the timer queue tells
+ * the API (rule 1 picks the start page there). With a timer already running, open that one.
+ */
 export function useStartReading() {
   const router = useAppRouter();
-  const mutation = useStartTimer();
-  // mutateAsync: the caller may unmount once the timer lands in the cache (e.g. the /read picker).
-  const start = (bookId: string) =>
-    mutation.mutateAsync({ bookId }).then(
-      () => router.push('/read'),
-      (error: unknown) => {
-        // Another timer is already running: show it instead.
-        if (error instanceof ApiRequestError && error.code === 'timer_running')
-          router.push('/read');
-      },
-    );
-  return { start, isPending: mutation.isPending, error: mutation.error };
+  const timer = useTimer();
+  const actions = useTimerActions();
+  const start = (book: BookWithProgress) => {
+    if (!timer.data) actions.start(book);
+    router.push('/read');
+  };
+  return { start, disabled: timer.isPending };
 }

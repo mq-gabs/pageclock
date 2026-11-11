@@ -66,16 +66,11 @@ export function NowReadingCard() {
       <Button
         size="compact"
         className="mt-2"
-        disabled={start.isPending}
-        onClick={() => start.start(book.id)}
+        disabled={start.disabled}
+        onClick={() => start.start(book)}
       >
         Start reading
       </Button>
-      {start.error && (
-        <p role="alert" className="mt-1 text-meta text-destructive">
-          {start.error.message}
-        </p>
-      )}
     </section>
   );
 }

@@ -11,6 +11,7 @@ import { createApp } from '../app';
 import type { Db } from '../db/client';
 import { seed } from '../db/seed';
 import { authedAgent, createTestUser } from '../test/auth';
+import { startTimerBody } from '../test/timer';
 import { createTestDb } from '../test/db';
 
 const now = new Date('2026-10-28T15:00:00Z');
@@ -69,7 +70,9 @@ describe('GET /api/backup', () => {
   it('leaves out a running timer', async () => {
     const before = (await exportOf(demo)).sessions.length;
     const piranesi = (await booksOf(demo)).find((b) => b.title === 'Piranesi')!;
-    expect((await demo.post('/api/timer/start').send({ bookId: piranesi.id })).status).toBe(201);
+    expect((await demo.post('/api/timer/start').send(startTimerBody(piranesi.id))).status).toBe(
+      201,
+    );
     expect((await exportOf(demo)).sessions).toHaveLength(before);
   });
 

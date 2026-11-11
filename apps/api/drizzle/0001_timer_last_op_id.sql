@@ -1,0 +1,1 @@
+ALTER TABLE `reading_sessions` ADD `last_op_id` text;

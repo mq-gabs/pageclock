@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { failureBannerThreshold, timerQueue, useTimerQueue } from '@/lib/timer-queue';
 import { toast } from '@/lib/toast';
 
 const card = 'flex flex-col gap-5 rounded-card border border-border bg-surface p-5 lg:p-6';
@@ -69,6 +71,43 @@ export function DevView() {
           </Button>
         </div>
       </section>
+
+      <OfflineSection />
     </main>
+  );
+}
+
+/** Makes the timer queue's requests fail, to check the retries and the connection banner. */
+function OfflineSection() {
+  const [offline, setOffline] = useState(() => timerQueue.isSimulatingOffline());
+  const { pending, failures } = useTimerQueue();
+  return (
+    <section aria-labelledby="dev-offline" className={`${card} max-w-140`}>
+      <div className="flex flex-col gap-1">
+        <h2 id="dev-offline" className="text-[17px] font-semibold text-ink">
+          Timer queue
+        </h2>
+        <p className="text-[14px] text-muted">
+          Timer actions fail like a network error while this is on; the banner shows after{' '}
+          {failureBannerThreshold} failures (about 3 s). Resets on reload.
+        </p>
+      </div>
+      <label className="flex items-center gap-3 text-[15px] text-ink">
+        <input
+          type="checkbox"
+          role="switch"
+          checked={offline}
+          onChange={(e) => {
+            timerQueue.setSimulateOffline(e.target.checked);
+            setOffline(e.target.checked);
+          }}
+          className="size-5 accent-accent"
+        />
+        Simulate offline
+      </label>
+      <p className="text-meta text-muted tabular-nums">
+        {pending} waiting · {failures} {failures === 1 ? 'failure' : 'failures'} in a row
+      </p>
+    </section>
   );
 }

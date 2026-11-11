@@ -9,8 +9,10 @@ import { useAppRouter } from '@/lib/navigation-progress';
 import { cn } from '@/lib/utils';
 import { NowReadingCard } from './now-reading-card';
 import { AppLink } from './app-link';
+import { TimerConnectionBanner } from './connection-banner';
 import { NavigationProgress } from './navigation-progress';
 import { PageclockWordmark } from './logo';
+import { TimerQueueSync } from './timer-queue-sync';
 
 interface NavItem {
   href: string;
@@ -138,17 +140,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen lg:flex">
+    <div className="flex min-h-screen flex-col">
       <NavigationProgress />
+      <TimerQueueSync />
       <a
         href="#content"
         className="sr-only z-50 rounded-button border border-border bg-surface font-semibold text-accent shadow-sm focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:px-4 focus:py-2"
       >
         Skip to content
       </a>
-      <Sidebar path={path} />
-      <div id="content" tabIndex={-1} className="min-w-0 flex-1 pb-16 outline-none lg:pb-0">
-        {children}
+      <TimerConnectionBanner />
+      <div className="flex-1 lg:flex">
+        <Sidebar path={path} />
+        <div id="content" tabIndex={-1} className="min-w-0 flex-1 pb-16 outline-none lg:pb-0">
+          {children}
+        </div>
       </div>
       <BottomNav path={path} />
     </div>

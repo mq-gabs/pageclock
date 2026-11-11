@@ -13,6 +13,7 @@ import type { Db } from '../db/client';
 import { demoUser, seed } from '../db/seed';
 import { tokenLifetimeMs } from '../services/auth';
 import { authedAgent } from '../test/auth';
+import { startTimerBody } from '../test/timer';
 import { createTestDb } from '../test/db';
 
 let db: Db;
@@ -283,7 +284,7 @@ describe('each user sees only their own data', () => {
     };
     expect((await ana.post('/api/reading-sessions').send(session)).status).toBe(404);
     expect((await ana.post('/api/reading-sessions/check').send(session)).status).toBe(404);
-    expect((await ana.post('/api/timer/start').send({ bookId: demoBookId })).status).toBe(404);
+    expect((await ana.post('/api/timer/start').send(startTimerBody(demoBookId))).status).toBe(404);
 
     const { sessions } = (await demo.get(`/api/books/${demoBookId}/sessions`)).body as {
       sessions: { id: string }[];
@@ -299,9 +300,11 @@ describe('each user sees only their own data', () => {
     const created = await ana
       .post('/api/books')
       .send({ title: 'Dune', author: 'F', totalPages: 9 });
-    expect((await demo.post('/api/timer/start').send({ bookId: demoBookId })).status).toBe(201);
+    expect((await demo.post('/api/timer/start').send(startTimerBody(demoBookId))).status).toBe(201);
     expect(timerResponseSchema.parse((await ana.get('/api/timer')).body).timer).toBeNull();
-    expect((await ana.post('/api/timer/start').send({ bookId: created.body.id })).status).toBe(201);
+    expect((await ana.post('/api/timer/start').send(startTimerBody(created.body.id))).status).toBe(
+      201,
+    );
   });
 
   it('keeps stats per user', async () => {
