@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { AppShell } from '@/components/app-shell';
+import { Toaster } from '@/components/ui/toaster';
 import { themeScript } from '@/lib/theme-script';
 import { Providers } from './providers';
 import './globals.css';
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Providers>
           <AppShell>{children}</AppShell>
+          <Toaster />
         </Providers>
       </body>
     </html>

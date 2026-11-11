@@ -17,6 +17,10 @@
   --accent-tint: light-dark(#e2efe8, #1e3a2f);
   --warning: light-dark(#9a5b0f, #e3a857);
   --warning-tint: light-dark(#fcf1de, #3a2b15);
+  /* Toasts: success is the brand green; error tint pairs with --destructive. */
+  --success: var(--accent);
+  --success-tint: var(--accent-tint);
+  --destructive-tint: light-dark(#fdecea, #3b1d1a);
   --heat-0: light-dark(#efebe5, #2a2622);
   --heat-1: light-dark(#cfe5da, #1f3d31);
   --heat-2: light-dark(#8cc2a8, #2e6b57);
@@ -56,6 +60,9 @@
   --color-accent-tint: var(--accent-tint);
   --color-warning: var(--warning);
   --color-warning-tint: var(--warning-tint);
+  --color-success: var(--success);
+  --color-success-tint: var(--success-tint);
+  --color-destructive-tint: var(--destructive-tint);
   --color-heat-0: var(--heat-0);
   --color-heat-1: var(--heat-1);
   --color-heat-2: var(--heat-2);
@@ -154,5 +161,53 @@
   .nav-progress-bar {
     width: 100%;
     animation: none;
+  }
+}
+
+/* Toaster (components/ui/toaster.tsx): slide in from past the right edge, slide back out,
+   then collapse the slot so the toasts above move down. Durations match lib/toast.ts. */
+@keyframes toast-in {
+  from {
+    transform: translateX(calc(100% + 2rem));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes toast-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(100% + 2rem));
+  }
+}
+.toast-slot {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 150ms ease-in-out;
+}
+.toast-slot[data-phase='collapsing'] {
+  grid-template-rows: 0fr;
+  overflow: hidden;
+}
+.toast-card {
+  animation: toast-in 250ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.toast-slot[data-phase='leaving'] .toast-card,
+.toast-slot[data-phase='collapsing'] .toast-card {
+  animation: toast-out 200ms ease-in both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-slot {
+    transition: none;
+  }
+  .toast-card,
+  .toast-slot[data-phase='leaving'] .toast-card,
+  .toast-slot[data-phase='collapsing'] .toast-card {
+    animation: none;
+  }
+  .toast-slot[data-phase='leaving'] .toast-card {
+    opacity: 0;
   }
 }
