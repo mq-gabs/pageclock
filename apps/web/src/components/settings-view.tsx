@@ -8,6 +8,7 @@ import { changePasswordSchema, signUpSchema, userLimits, type User } from '@read
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { backupErrorLines, backupFileName, importSummary } from '@/lib/backup';
+import { displayTimeZone } from '@/lib/config';
 import { setApiErrors } from '@/lib/form-errors';
 import { setThemePreference, useThemePreference } from '@/lib/theme';
 import type { ThemePreference } from '@/lib/theme-script';
@@ -206,7 +207,7 @@ function BackupCard() {
     setStatus(null);
     setDownloading(true);
     try {
-      saveJsonFile(await fetchBackup(), backupFileName(new Date()));
+      saveJsonFile(await fetchBackup(), backupFileName(new Date(), displayTimeZone()));
     } catch (error) {
       setStatus({ kind: 'error', lines: backupErrorLines(error) });
     } finally {

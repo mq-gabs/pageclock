@@ -16,7 +16,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { ApiRequestError, ApiWarningsError } from '@/lib/api';
-import { appTimeZone } from '@/lib/config';
+import { displayTimeZone } from '@/lib/config';
 import { formatSessionDuration, formatSpeed, formatTime } from '@/lib/format';
 import { checkSession, useBook, useStopTimer, useTimerActions } from '@/lib/queries';
 import { useTimerQueue } from '@/lib/timer-queue';
@@ -172,8 +172,8 @@ export function FinishSessionForm({
       <div className="flex flex-col gap-1">
         <DialogTitle className="text-section font-bold text-ink">Finish session</DialogTitle>
         <DialogDescription className="text-[14px] text-muted">
-          {book.title} · {formatTime(session.startedAt, appTimeZone)} –{' '}
-          {formatTime(endedAt.toISOString(), appTimeZone)}
+          {book.title} · {formatTime(session.startedAt, displayTimeZone())} –{' '}
+          {formatTime(endedAt.toISOString(), displayTimeZone())}
         </DialogDescription>
       </div>
 

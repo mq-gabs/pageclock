@@ -1,14 +1,14 @@
 import { AlertTriangle } from 'lucide-react';
 import type { ApiWarning, WarningSuggestion } from '@reading-tracker/shared';
-import { appTimeZone } from '@/lib/config';
+import { displayTimeZone } from '@/lib/config';
 import { formatTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 export function suggestionLabel(suggestion: WarningSuggestion): string | null {
   if (suggestion.startPage !== undefined) return `Start at page ${suggestion.startPage}`;
   if (suggestion.endPage !== undefined) return `End at page ${suggestion.endPage}`;
-  if (suggestion.startedAt) return `Start at ${formatTime(suggestion.startedAt, appTimeZone)}`;
-  if (suggestion.endedAt) return `End at ${formatTime(suggestion.endedAt, appTimeZone)}`;
+  if (suggestion.startedAt) return `Start at ${formatTime(suggestion.startedAt, displayTimeZone())}`;
+  if (suggestion.endedAt) return `End at ${formatTime(suggestion.endedAt, displayTimeZone())}`;
   return null;
 }
 

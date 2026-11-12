@@ -1,10 +1,10 @@
-import type { ImportBackupResponse } from '@reading-tracker/shared';
+import { toDateKey, type ImportBackupResponse } from '@reading-tracker/shared';
 import { ApiRequestError } from './api';
 import { formatCount } from './format';
 
-/** `pageclock-backup-2026-11-02.json` (UTC date, like the rest of the app). */
-export const backupFileName = (now: Date) =>
-  `pageclock-backup-${now.toISOString().slice(0, 10)}.json`;
+/** `pageclock-backup-2026-11-02.json`, dated in the device's time zone. */
+export const backupFileName = (now: Date, timeZone: string) =>
+  `pageclock-backup-${toDateKey(now, timeZone)}.json`;
 
 const fieldLabels: Record<string, string> = {
   id: 'id',

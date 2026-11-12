@@ -3,10 +3,10 @@ import { ApiRequestError } from './api';
 import { backupErrorLines, backupFileName, backupPathLabel, importSummary } from './backup';
 
 describe('backupFileName', () => {
-  it('uses the UTC date', () => {
-    expect(backupFileName(new Date('2026-11-02T23:30:00-03:00'))).toBe(
-      'pageclock-backup-2026-11-03.json',
-    );
+  it('uses the date in the given time zone', () => {
+    const now = new Date('2026-11-02T23:30:00-03:00');
+    expect(backupFileName(now, 'America/Fortaleza')).toBe('pageclock-backup-2026-11-02.json');
+    expect(backupFileName(now, 'UTC')).toBe('pageclock-backup-2026-11-03.json');
   });
 });
 

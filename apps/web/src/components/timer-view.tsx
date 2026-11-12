@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { timerElapsedSeconds, type LocalTimer } from '@reading-tracker/shared';
 import { Button } from '@/components/ui/button';
-import { appTimeZone } from '@/lib/config';
+import { displayTimeZone } from '@/lib/config';
 import { formatBookMeta, formatClock, formatShortDate, formatTime } from '@/lib/format';
 import { useBooks, useTimer, useTimerActions } from '@/lib/queries';
 import { useTimerQueue } from '@/lib/timer-queue';
@@ -100,7 +100,7 @@ function RunningTimer({ timer, onStop }: { timer: LocalTimer; onStop: () => void
           </p>
           <p className="text-[14px] text-muted lg:text-[15px]">
             {paused ? 'Paused' : 'Running'} · started at{' '}
-            {formatTime(session.startedAt, appTimeZone)}
+            {formatTime(session.startedAt, displayTimeZone())}
           </p>
           {pending > 0 && (
             <p role="status" className="text-meta text-muted">
@@ -171,7 +171,7 @@ function StartPageField({
     helper = (
       <>
         Filled in from the page after your last session ended (
-        {formatShortDate(previous.startedAt, appTimeZone)}). {action}
+        {formatShortDate(previous.startedAt, displayTimeZone())}). {action}
       </>
     );
   } else if (previous) {
@@ -244,7 +244,7 @@ function StartPicker() {
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <p className="truncate text-[15px] font-semibold text-ink">{book.title}</p>
                 <p className="truncate text-label text-muted">{book.author}</p>
-                <p className="truncate text-meta text-muted">{formatBookMeta(book, appTimeZone)}</p>
+                <p className="truncate text-meta text-muted">{formatBookMeta(book, displayTimeZone())}</p>
               </div>
               <Button
                 size="compact"

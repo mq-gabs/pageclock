@@ -6,7 +6,7 @@ import { bookStatusLabels } from '@reading-tracker/shared';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { ApiRequestError } from '@/lib/api';
-import { appTimeZone } from '@/lib/config';
+import { displayTimeZone } from '@/lib/config';
 import { formatDuration, formatRelativeDay, formatShortDate, formatSpeed } from '@/lib/format';
 import { useBook, useBookSessions, useTimer } from '@/lib/queries';
 import { useLocalDialog } from '@/lib/use-local-dialog';
@@ -90,7 +90,7 @@ function BookScreen({ id, onLog }: { id: string; onLog: (sessionId?: string) => 
 
   const { book, stats } = data;
   const footer = stats.firstReadAt
-    ? `Started ${formatShortDate(stats.firstReadAt, appTimeZone)} · last read ${formatRelativeDay(stats.lastReadAt ?? stats.firstReadAt, new Date(), appTimeZone)}`
+    ? `Started ${formatShortDate(stats.firstReadAt, displayTimeZone())} · last read ${formatRelativeDay(stats.lastReadAt ?? stats.firstReadAt, new Date(), displayTimeZone())}`
     : 'Not started yet';
 
   return (

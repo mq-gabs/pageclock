@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { DialogClose, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { ApiRequestError, ApiWarningsError } from '@/lib/api';
-import { appTimeZone } from '@/lib/config';
+import { displayTimeZone } from '@/lib/config';
 import { formatSessionDuration } from '@/lib/format';
 import { rangeFromForm, toLocalParts } from '@/lib/local-time';
 import {
@@ -58,22 +58,22 @@ const serverFieldMap: Record<string, keyof FormValues> = {
 
 function defaultValues(book: BookWithProgress, session?: Session): Partial<FormValues> {
   if (session?.endedAt && session.endPage !== null) {
-    const start = toLocalParts(session.startedAt, appTimeZone);
+    const start = toLocalParts(session.startedAt, displayTimeZone());
     return {
       date: start.date,
       startTime: start.time,
-      endTime: toLocalParts(session.endedAt, appTimeZone).time,
+      endTime: toLocalParts(session.endedAt, displayTimeZone()).time,
       startPage: session.startPage,
       endPage: session.endPage,
     };
   }
   // New log: the last 30 minutes, ending now (rounded down to 5 minutes).
   const end = new Date(Math.floor(Date.now() / 300_000) * 300_000);
-  const start = toLocalParts(new Date(end.getTime() - 30 * 60_000), appTimeZone);
+  const start = toLocalParts(new Date(end.getTime() - 30 * 60_000), displayTimeZone());
   return {
     date: start.date,
     startTime: start.time,
-    endTime: toLocalParts(end, appTimeZone).time,
+    endTime: toLocalParts(end, displayTimeZone()).time,
     startPage: Math.min(book.progress + 1, book.totalPages),
   };
 }
@@ -129,7 +129,7 @@ function SessionForm({
     let cancelled = false;
     const { startedAt } = rangeFromForm(
       { date: values.date, startTime: values.startTime, endTime: values.startTime },
-      appTimeZone,
+      displayTimeZone(),
     );
     fetchSuggestedStartPage(book.id, startedAt)
       .then(({ startPage }) => {
@@ -150,7 +150,7 @@ function SessionForm({
     if (!parsed.success) return;
     const run = ++checkRun.current;
     const timer = setTimeout(() => {
-      const { startedAt, endedAt } = rangeFromForm(parsed.data, appTimeZone);
+      const { startedAt, endedAt } = rangeFromForm(parsed.data, displayTimeZone());
       checkSession({
         id: session?.id,
         bookId: book.id,
@@ -171,7 +171,7 @@ function SessionForm({
 
   const submit = (confirmWarnings: boolean) =>
     form.handleSubmit(async (data) => {
-      const { startedAt, endedAt } = rangeFromForm(data, appTimeZone);
+      const { startedAt, endedAt } = rangeFromForm(data, displayTimeZone());
       const input = {
         startedAt: startedAt.toISOString(),
         endedAt: endedAt.toISOString(),
@@ -213,12 +213,12 @@ function SessionForm({
     }
     if (suggestion.endPage !== undefined) form.setValue('endPage', suggestion.endPage, opts);
     if (suggestion.startedAt) {
-      const start = toLocalParts(suggestion.startedAt, appTimeZone);
+      const start = toLocalParts(suggestion.startedAt, displayTimeZone());
       form.setValue('date', start.date, opts);
       form.setValue('startTime', start.time, opts);
     }
     if (suggestion.endedAt) {
-      form.setValue('endTime', toLocalParts(suggestion.endedAt, appTimeZone).time, opts);
+      form.setValue('endTime', toLocalParts(suggestion.endedAt, displayTimeZone()).time, opts);
     }
   };
 
@@ -226,7 +226,7 @@ function SessionForm({
   const summary = (() => {
     const parsed = schema.safeParse(values);
     if (!parsed.success) return null;
-    const { startedAt, endedAt } = rangeFromForm(parsed.data, appTimeZone);
+    const { startedAt, endedAt } = rangeFromForm(parsed.data, displayTimeZone());
     const minutes = (endedAt.getTime() - startedAt.getTime()) / 60_000;
     return `${parsed.data.endPage - parsed.data.startPage + 1} pages · ${formatSessionDuration(minutes)}`;
   })();

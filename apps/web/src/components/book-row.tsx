@@ -1,5 +1,5 @@
 import type { BookWithProgress } from '@reading-tracker/shared';
-import { appTimeZone } from '@/lib/config';
+import { displayTimeZone } from '@/lib/config';
 import { formatBookMeta } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { BookCover } from './book-cover';
@@ -25,7 +25,7 @@ export function BookRow({ book, className }: { book: BookWithProgress; className
           <ProgressBar percent={book.percent} label={`${book.title} progress`} className="flex-1" />
           <span className="text-meta font-medium text-muted">{book.percent}%</span>
         </div>
-        <p className="truncate text-meta text-muted">{formatBookMeta(book, appTimeZone)}</p>
+        <p className="truncate text-meta text-muted">{formatBookMeta(book, displayTimeZone())}</p>
       </div>
     </AppLink>
   );

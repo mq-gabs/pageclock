@@ -1,11 +1,11 @@
 import type { Session } from '@reading-tracker/shared';
-import { appTimeZone } from '@/lib/config';
+import { displayTimeZone } from '@/lib/config';
 import { formatDayLabel, formatSessionDuration, formatSpeed, formatTime } from '@/lib/format';
 import { LocalLink } from './app-link';
 import { EmptyState } from './states';
 
 const timeRange = (s: Session) =>
-  `${formatTime(s.startedAt, appTimeZone)} – ${s.endedAt ? formatTime(s.endedAt, appTimeZone) : 'now'}`;
+  `${formatTime(s.startedAt, displayTimeZone())} – ${s.endedAt ? formatTime(s.endedAt, displayTimeZone()) : 'now'}`;
 
 interface SessionListProps {
   sessions: Session[];
@@ -66,7 +66,7 @@ export function SessionList({ sessions, editHref, onEdit }: SessionListProps) {
             {sessions.map((s) => (
               <tr key={s.id} className="border-b border-border last:border-b-0">
                 <td className="px-4 py-3 font-semibold text-ink">
-                  {formatDayLabel(s.startedAt, appTimeZone)}
+                  {formatDayLabel(s.startedAt, displayTimeZone())}
                 </td>
                 <td className="px-4 py-3 text-muted">{timeRange(s)}</td>
                 <td className="px-4 py-3 text-muted">
@@ -91,7 +91,7 @@ export function SessionList({ sessions, editHref, onEdit }: SessionListProps) {
                       Edit
                       <span className="sr-only">
                         {' '}
-                        session on {formatDayLabel(s.startedAt, appTimeZone)}
+                        session on {formatDayLabel(s.startedAt, displayTimeZone())}
                       </span>
                     </LocalLink>
                   )}
@@ -119,7 +119,7 @@ function SessionRow({
     <>
       <div className="flex min-w-0 flex-col gap-0.5">
         <p className="text-[14px] font-semibold text-ink">
-          {formatDayLabel(s.startedAt, appTimeZone)}
+          {formatDayLabel(s.startedAt, displayTimeZone())}
         </p>
         <p className="text-meta text-muted">
           {timeRange(s)}
