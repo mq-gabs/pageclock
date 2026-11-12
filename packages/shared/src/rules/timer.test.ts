@@ -72,6 +72,36 @@ describe('pausedSecondsAfterResume', () => {
     const timer: TimerState = { startedAt, pausedAt: null, pausedSeconds: 90 };
     expect(pausedSecondsAfterResume(timer, at('2026-10-27T23:35:00Z'))).toBe(90);
   });
+  it('continues from the second shown when paused, whatever the fractions', () => {
+    // Paused and resumed at every 100 ms offset within a second, 3 s apart and more.
+    const ms = (offset: number) => new Date(startedAt.getTime() + offset);
+    for (let pause = 14_000; pause < 15_000; pause += 100) {
+      for (let resume = pause + 3_000; resume < pause + 5_000; resume += 100) {
+        const paused: TimerState = { startedAt, pausedAt: ms(pause), pausedSeconds: 0 };
+        const shown = timerElapsedSeconds(paused, ms(resume));
+        const running: TimerState = {
+          startedAt,
+          pausedAt: null,
+          pausedSeconds: pausedSecondsAfterResume(paused, ms(resume)),
+        };
+        expect(shown).toBe(14);
+        // Right after the tap, and up to a second later: the next second, never a jump.
+        expect(timerElapsedSeconds(running, ms(resume))).toBe(14);
+        expect(timerElapsedSeconds(running, ms(resume + 999))).toBeLessThanOrEqual(15);
+        expect(timerElapsedSeconds(running, ms(resume + 1000))).toBe(15);
+      }
+    }
+  });
+
+  it('counts the pause within a second of its length', () => {
+    const paused: TimerState = {
+      startedAt,
+      pausedAt: at('2026-10-27T23:10:14.900Z'),
+      pausedSeconds: 0,
+    };
+    expect(pausedSecondsAfterResume(paused, at('2026-10-27T23:10:18.300Z'))).toBe(4); // 3.4 s
+    expect(pausedSecondsAfterResume(paused, at('2026-10-27T23:10:14.950Z'))).toBe(0);
+  });
 });
 
 describe('validateTimerStartPage', () => {

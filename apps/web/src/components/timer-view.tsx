@@ -9,6 +9,7 @@ import { formatBookMeta, formatClock, formatShortDate, formatTime } from '@/lib/
 import { useBooks, useTimer, useTimerActions } from '@/lib/queries';
 import { useTimerQueue } from '@/lib/timer-queue';
 import { useLocalDialog } from '@/lib/use-local-dialog';
+import { serverNow } from '@/lib/server-clock';
 import { useNow } from '@/lib/use-now';
 import { useStartReading } from '@/lib/use-start-reading';
 import { AppLink } from './app-link';
@@ -58,7 +59,7 @@ function TimerScreen({ onStop }: { onStop: () => void }) {
 function RunningTimer({ timer, onStop }: { timer: LocalTimer; onStop: () => void }) {
   const { session, book, previous } = timer;
   const paused = session.pausedAt !== null;
-  const now = useNow(!paused);
+  const now = useNow(!paused, 250, serverNow);
   const actions = useTimerActions();
   const { pending } = useTimerQueue();
   const elapsed = timerElapsedSeconds(

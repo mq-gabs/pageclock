@@ -4,6 +4,7 @@ import { timerElapsedSeconds } from '@reading-tracker/shared';
 import { Button } from '@/components/ui/button';
 import { formatClock } from '@/lib/format';
 import { useBooks, useTimer } from '@/lib/queries';
+import { serverNow } from '@/lib/server-clock';
 import { useNow } from '@/lib/use-now';
 import { useStartReading } from '@/lib/use-start-reading';
 import { AppLink } from './app-link';
@@ -23,7 +24,7 @@ export function NowReadingCard() {
   const start = useStartReading();
   const running = timer.data;
   const paused = running?.session.pausedAt != null;
-  const now = useNow(Boolean(running) && !paused);
+  const now = useNow(Boolean(running) && !paused, 250, serverNow);
 
   if (timer.isPending) return null;
 

@@ -2,12 +2,17 @@
 
 import { useEffect, useState } from 'react';
 
-/** The current time, refreshed every `intervalMs` while `enabled`. */
-export function useNow(enabled = true, intervalMs = 1000): Date {
-  const [now, setNow] = useState(() => new Date());
+const deviceNow = () => new Date();
+
+/**
+ * The current time, refreshed every `intervalMs` while `enabled`. Timer displays pass
+ * `serverNow`, the clock timer clicks are stamped with, so pausing freezes the second shown.
+ */
+export function useNow(enabled = true, intervalMs = 1000, clock: () => Date = deviceNow): Date {
+  const [now, setNow] = useState(clock);
   useEffect(() => {
     if (!enabled) return;
-    const tick = () => setNow(new Date());
+    const tick = () => setNow(clock());
     // Catch up right away after being disabled (e.g. a resumed timer), then keep ticking.
     const first = setTimeout(tick, 0);
     const id = setInterval(tick, intervalMs);
@@ -15,6 +20,6 @@ export function useNow(enabled = true, intervalMs = 1000): Date {
       clearTimeout(first);
       clearInterval(id);
     };
-  }, [enabled, intervalMs]);
+  }, [enabled, intervalMs, clock]);
   return now;
 }

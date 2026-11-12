@@ -20,6 +20,7 @@ import { appTimeZone } from '@/lib/config';
 import { formatSessionDuration, formatSpeed, formatTime } from '@/lib/format';
 import { checkSession, useBook, useStopTimer, useTimerActions } from '@/lib/queries';
 import { useTimerQueue } from '@/lib/timer-queue';
+import { serverNow } from '@/lib/server-clock';
 import { useNow } from '@/lib/use-now';
 import { Field } from './field';
 import { PageCheckBanner } from './page-check-banner';
@@ -79,7 +80,7 @@ export function FinishSessionForm({
 
   // Stop pauses the timer, so the end is fixed; if it still runs, it ends now.
   const paused = session.pausedAt !== null;
-  const now = useNow(!paused);
+  const now = useNow(!paused, 250, serverNow);
   const startedAt = new Date(session.startedAt);
   const endedAt = timerEndedAt(
     { startedAt, pausedAt: session.pausedAt ? new Date(session.pausedAt) : null, pausedSeconds: 0 },

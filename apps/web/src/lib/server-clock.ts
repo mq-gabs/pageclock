@@ -1,28 +1,39 @@
 /**
  * The difference between the server clock and the device clock, estimated from the `Date`
  * header of API responses, so timer clicks are stamped in server time even when the device
- * clock is wrong (rule 5a).
+ * clock is wrong (rule 5a). Timer displays read the same clock (`serverNow`), so a pause
+ * freezes on the second that was showing and a resume continues from it.
+ *
+ * Each response bounds the offset: the server wrote the header during the second it names
+ * (whole seconds only) and between sending and receiving on the device. Intersecting those
+ * bounds narrows the estimate over time instead of jumping with every response.
  */
-let offsetMs = 0;
+let low = -Infinity;
+let high = Infinity;
 
-/**
- * Updates the estimate from a response's `Date` header. The header has whole seconds, so the
- * server time is taken as the middle of that second, and the device time as the middle of the
- * request.
- */
 export function noteServerDate(header: string | null, sentAt: number, receivedAt: number) {
   if (!header) return;
   const serverMs = Date.parse(header);
   if (Number.isNaN(serverMs)) return;
-  offsetMs = serverMs + 500 - (sentAt + receivedAt) / 2;
+  const sampleLow = serverMs - receivedAt;
+  const sampleHigh = serverMs + 1000 - sentAt;
+  if (Math.max(low, sampleLow) > Math.min(high, sampleHigh)) {
+    // Doesn't fit what we knew: the device clock was changed. Start over from this response.
+    low = sampleLow;
+    high = sampleHigh;
+  } else {
+    low = Math.max(low, sampleLow);
+    high = Math.min(high, sampleHigh);
+  }
 }
 
-/** "Now" on the server's clock, as well as the device can tell. */
-export const serverNow = (): Date => new Date(Date.now() + offsetMs);
+export const serverClockOffsetMs = () => (Number.isFinite(low) ? (low + high) / 2 : 0);
 
-export const serverClockOffsetMs = () => offsetMs;
+/** "Now" on the server's clock, as well as the device can tell. */
+export const serverNow = (): Date => new Date(Date.now() + serverClockOffsetMs());
 
 /** For tests. */
 export function resetServerClock() {
-  offsetMs = 0;
+  low = -Infinity;
+  high = Infinity;
 }

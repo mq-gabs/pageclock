@@ -16,11 +16,19 @@ export function timerElapsedSeconds(timer: TimerState, now: Date): number {
   return Math.max(0, Math.floor(ms / 1000) - timer.pausedSeconds);
 }
 
-/** Rule 5: resuming adds the time spent paused to `pausedSeconds`. */
+/**
+ * Rule 5: resuming adds the time spent paused to `pausedSeconds`, in whole seconds: the ticks
+ * of the elapsed clock (whole seconds since the start) that passed while paused. Rounding the
+ * pause's length instead would make the shown time jump by a second on resume; this way it
+ * continues from the second it froze on. The pause is counted within a second of its length.
+ */
 export function pausedSecondsAfterResume(timer: TimerState, now: Date): number {
   if (!timer.pausedAt) return timer.pausedSeconds;
-  const paused = Math.round((now.getTime() - timer.pausedAt.getTime()) / 1000);
-  return timer.pausedSeconds + Math.max(0, paused);
+  const start = timer.startedAt.getTime();
+  const ticks =
+    Math.floor((now.getTime() - start) / 1000) -
+    Math.floor((timer.pausedAt.getTime() - start) / 1000);
+  return timer.pausedSeconds + Math.max(0, ticks);
 }
 
 /**
